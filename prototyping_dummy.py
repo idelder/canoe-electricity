@@ -1,56 +1,85 @@
 import requests
 import pandas as pd
-import json
-import math
 import numpy as np
-import os
+from matplotlib import pyplot as plot
+import json
 import sqlite3
-import urllib.request as urlrq
-import certifi
-import xmltodict
-from matplotlib import pyplot
-import solar_capacity_factor
+import os
 
-""" this_dir = os.path.realpath(os.path.dirname(__file__)) + "/"
-turbine_xlsx = this_dir + 'Wind_Turbine_Database_FGP.xlsx'
+# I think it's a warcrime to use lambda functions like this
+url = lambda YYYYMM: f"""http://reports.ieso.ca/public/GenOutputCapabilityMonth/PUB_GenOutputCapabilityMonth_{YYYYMM}.csv"""
+get_ieso_data = lambda YYYYMM: pd.read_csv(url(YYYYMM), skiprows=3, index_col=False)
+# get_ieso_data = lambda YYYYMM: pd.read_csv('cache.csv', index_col=0)
+DDMM = lambda dm: str(dm) if dm>9 else '0' + str(dm)
+to_date = lambda month, day: f"2020-{DDMM(month+1)}-{DDMM(day+1)}"
+get_ieso_value = lambda ieso_data, generator, measurement, month, day, hour: ieso_data.loc[(ieso_data['Generator'] == generator) & (ieso_data['Measurement'] == measurement) & (ieso_data['Delivery Date'] == to_date(month, day))]['Hour ' + str(hour+1)].values[0]
 
-url = 'http://reports.ieso.ca/public/GenOutputbyFuelHourly/PUB_GenOutputbyFuelHourly_2020.xml'
+# ieso_data = pd.read_csv(url(202001), skiprows=3, index_col=False)
+# print(ieso_data.head())
 
-http = requests.get(url).content
+ieso_hydro_gens = pd.read_excel('ieso_hydro_generators.xlsx', index_col=False, header=None)
+ror_gens = []
+dly_gens = []
 
-data = json.dumps(xmltodict.parse(http))
-
-print(data)
-
-file = open('fuelhourly.txt', 'w')
-file.write(data)
-file.close() """
-
-file = open('fuelhourly.txt')
-data = json.loads(file.read())
-
-# data['Document']['DocBody']['DailyData'][day 1-366]['HourlyData'][hour 1 - 24]['FuelTotal'][where 'Fuel' == e.g. 'NUCLEAR']['EnergyValue']['Output']
-
-fuels = ['NUCLEAR', 'GAS', 'HYDRO', 'WIND', 'SOLAR', 'BIOFUEL']
-
-fuels_hourly = dict()
-
-for fuel in fuels:
-    fuels_hourly.update({fuel: list()})
-
-    for day in range(365):
-        for hour in range(24):
-            hourly_data = data['Document']['DocBody']['DailyData'][day]['HourlyData'][hour]['FuelTotal']
-            fuel_values = [values for values in hourly_data if values['Fuel'] == fuel]
-            fuel_value = float(fuel_values[0]['EnergyValue']['Output'])
-            fuels_hourly[fuel].append(fuel_value)
-
-    print((day)*24 + 1+hour)
+for r in range(len(ieso_hydro_gens)):
     
-exs_cf = solar_capacity_factor.get_exs_cf(None, None)
+    gen_type = ieso_hydro_gens.iloc[r,1]
 
-pyplot.plot(exs_cf,'r-')
-pyplot.plot((np.array(fuels_hourly['SOLAR']) / 663),'b-')
-pyplot.show()
+    if gen_type == 'HYDRO_RUN':
+        ror_gens.append(ieso_hydro_gens.iloc[r,0])
+    elif gen_type == 'HYDRO_DAILY':
+        dly_gens.append(ieso_hydro_gens.iloc[r,0])
 
-print(sum(exs_cf), sum(np.array(fuels_hourly['SOLAR']) / 663))
+output_ror = np.zeros(shape=(8760,1))
+cap_ror = np.zeros(shape=(8760,1))
+output_dly = np.zeros(shape=(365,1))
+cap_dly = np.zeros(shape=(365,1))
+
+days_in_months = [31,28,31,30,31,30,31,31,30,31,30,31]
+
+# ieso_data.to_csv('cache.csv')
+ieso_data = pd.read_csv('cache.csv', index_col=0)
+print(ieso_data.head())
+
+# This is so lazy but how often is it really gonna run
+H = 0
+D = 0
+for month in range(12):
+
+    ieso_data = get_ieso_data('2020' + DDMM(month + 1))
+
+    for day in range(days_in_months[month]):
+        for hour in range(24):
+            
+            # 24h vector outputs
+            for gen in ror_gens:
+                try:
+                    output_ror[H] += int(get_ieso_value(ieso_data, gen, 'Output', month, day, hour))
+                    cap_ror[H] += int(get_ieso_value(ieso_data, gen, 'Capability', month, day, hour))
+                except:
+                    print(f"Value error for {gen}, {to_date(month, day)}")
+            
+            # sum days output
+            for gen in dly_gens:
+                try:
+                    output_dly[D] += int(get_ieso_value(ieso_data, gen, 'Output', month, day, hour))
+                    cap_dly[D] += int(get_ieso_value(ieso_data, gen, 'Capability', month, day, hour))
+                except:
+                    print(f"Value error for {gen}, {to_date(month, day)}")
+
+            H += 1
+
+        D += 1
+        print(f"Days completed: {D}")
+
+cf_ror = output_ror / cap_ror
+cf_dly = output_dly / cap_dly
+
+plot.figure(1)
+plot.plot(cf_ror)
+plot.figure(2)
+plot.plot(cf_dly)
+plot.show()
+
+pd.DataFrame(cf_ror).to_csv('hydro_ror_cf.csv')
+pd.DataFrame(cf_dly).to_csv('hydro_dly_cf.csv')

@@ -229,7 +229,7 @@ for generator in existing_gen:
     curs.execute(f"""REPLACE INTO
                 ExistingCapacity(regions, tech, vintage, exist_cap, exist_cap_units, exist_cap_notes)
                 VALUES("{region}", "{tech}", "{vint}", "{exist_cap}", "{translator['units']['capacity']['CANOE_unit']}", "{string_cleaner(exist_cap_notes)}")""")
-    
+
 
 
 # Add generic technology data
@@ -541,7 +541,7 @@ for province in ca_sys_params:
 
 
 
-# Solar and Wind capacity factors
+# Solar and wind capacity factors estimated from CWEC data where none exists
 for region in all_regions:
     if region in ('EX', 'ON'): continue
 

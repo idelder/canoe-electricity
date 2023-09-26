@@ -16,7 +16,7 @@ from matplotlib import pyplot
 tofd_8760 = 1 + np.mod( np.arange(8760) , 24 )
 seas_8760 = 1 + np.int32(np.floor( np.arange(8760) / 24 ))
 
-def get_ieso_production(download=False):
+def get_ieso_production(download=False, update_cache=False):
 
     data = None # do you have to initialize variables in python? feels wrong not to
     if (download):
@@ -25,12 +25,11 @@ def get_ieso_production(download=False):
         xml_data = requests.get(url).content
         data = json.dumps(xmltodict.parse(xml_data))
 
-        """
-        # Uncomment this section to write data to txt file
-        file = open('ieso_gen_hourly_2020.txt', 'w')
-        file.write(data)
-        file.close()
-        """
+        if update_cache:
+            # Overwrite local data cache with newly downloaded file
+            file = open('ieso_gen_hourly_2020.txt', 'w')
+            file.write(data)
+            file.close()
 
         print('Downloaded hourly production data from IESO')
 

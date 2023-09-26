@@ -14,7 +14,7 @@ import cwec_stations
 zero_thresh = 10^-5 # Threshold to zero very low capacity factors
 
 script_path = os.path.realpath(os.path.dirname(__file__)) + "/"
-cwec_db = script_path + "CWEC/cwec.sqlite"
+cwec_db = script_path + "cwec.sqlite"
 
 conn = sqlite3.connect(cwec_db)
 curs = conn.cursor()
