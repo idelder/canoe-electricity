@@ -18,11 +18,6 @@ import coders_data
 
 
 
-# Pull CODERS data from the local cache or download it new
-from_cache = True
-
-
-
 # Get the schema, target, and database translation files
 this_dir = os.path.realpath(os.path.dirname(__file__)) + "/"
 schema_file = this_dir + "temoa_schema.sqlite"
@@ -42,10 +37,6 @@ curs = conn.cursor()
 # Convert translator database into a dictionary to speed things up
 # usage: translator['table name']['value of first column']['column value needed']
 translator = dict()
-
-# Get CODERS reference
-curs.execute("""SELECT reference FROM coders_reference""")
-reference = curs.fetchone()[0] + str(date.today())
 
 # Get future model periods
 curs.execute("""SELECT periods FROM model_periods""")
@@ -105,6 +96,12 @@ for r in range(len(rows)):
         global_value.update({column_names[c]: rows[r][c]})
 
 
+
+# Whether to pull data from cache or download
+pull_from_cache = translator['pull_parameters']['pull_from_cache']['value'] == 'true'
+
+
+
 # Close connection to translator
 conn.close()
 
@@ -119,14 +116,14 @@ curs.execute("""SELECT t_day FROM time_of_day""")
 times_of_day = [t_day[0] for t_day in curs.fetchall()]
 
 # Collect generic tech data. Need this now to get lifetimes for viable existing vintages
-generic_json = coders_data.get_json(end_point='generation_generic',from_cache=from_cache)
+generic_json = coders_data.get_json(end_point='generation_generic',from_cache=pull_from_cache)
 generic_techs = dict({translator['generator_types'][tech['generation_type'].upper()]['CANOE_tech']: tech for tech in generic_json})
 
 # Collect existing generator data
-existing_gen = coders_data.get_json(end_point='generators',from_cache=from_cache)
+existing_gen = coders_data.get_json(end_point='generators',from_cache=pull_from_cache)
 
 # Collect evolving cost data
-cost_json = coders_data.get_json(end_point='generation_cost_evolution',from_cache=from_cache)
+cost_json = coders_data.get_json(end_point='generation_cost_evolution',from_cache=pull_from_cache)
 evolving_cost = dict({translator['generator_types'][tech['gen_type'].upper()]['CANOE_tech']: tech for tech in cost_json})
 
 # Add future model periods
@@ -144,7 +141,7 @@ for region in all_regions:
 
 
 # Add storage technology data
-storage_exs = coders_data.get_json(end_point='storage',from_cache=from_cache)
+storage_exs = coders_data.get_json(end_point='storage',from_cache=pull_from_cache)
 
 old_storage_techs = set() # Storage techs without duration disaggregation to be removed
 for storage in storage_exs:
@@ -388,12 +385,12 @@ for interties in translator['transfer_regions'].keys():
     # Do not represent interties outside the model
     if region_1_CANOE == 'EX' and region_2_CANOE == 'EX': continue
 
-    from_region_1, from_region_2 = intertie_transfers.get_transfers(region_1, region_2, translator['transfer_regions'][interties]['type'], from_cache=from_cache)
+    from_region_1, from_region_2 = intertie_transfers.get_transfers(region_1, region_2, translator['transfer_regions'][interties]['type'], from_cache=pull_from_cache)
 
     intertie_flows.update({tech: {region_1_CANOE: from_region_1, region_2_CANOE: from_region_2}})
 
 
-interfaces = coders_data.get_json(end_point='interface_capacities',from_cache=from_cache)
+interfaces = coders_data.get_json(end_point='interface_capacities',from_cache=pull_from_cache)
 
 interface_techs = dict() # keys are CANOE techs
 
@@ -548,7 +545,7 @@ for tx_tech in tx_techs + dummy_techs:
                 VALUES("{translator['generator_types'][tx_tech]['output_comm']}")""")
 
 # Regional parameters
-ca_sys_params = coders_data.get_json(end_point='CA_system_parameters',from_cache=from_cache)
+ca_sys_params = coders_data.get_json(end_point='CA_system_parameters',from_cache=pull_from_cache)
 for province in ca_sys_params:
 
     region = translator['regions'][province['province'].upper()]['CANOE_region']
