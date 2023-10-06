@@ -20,6 +20,9 @@ seas_8760 = 1 + np.int32(np.floor( np.arange(8760) / 24 ))
 HH = lambda h: 'H' + ('0' if h<10 else '') + str(h)
 DDD = lambda d: 'D' + ('0' if d<100 else '') + ('0' if d<10 else '') + str(d)
 
+this_dir = os.path.realpath(os.path.dirname(__file__)) + "/"
+coders_db = this_dir + "coders_db.sqlite"
+
 def get_ieso_production(download=False, update_cache=False):
 
     data = None # do you have to initialize variables in python? feels wrong not to
@@ -69,49 +72,69 @@ def get_ieso_production(download=False, update_cache=False):
 
 
 
-hourly_production = get_ieso_production(download=False)
+def get_capacity_factors(download=False, update_cache=False):
 
-this_dir = os.path.realpath(os.path.dirname(__file__)) + "/"
-coders_db = this_dir + "coders_db.sqlite"
+    hourly_production = get_ieso_production(download=download, update_cache=update_cache)
 
-conn = sqlite3.connect(coders_db)
-curs = conn.cursor()
+    wind_total_cap = get_total_capacity('WIND')
+    solar_total_cap = get_total_capacity('SOLAR')
 
-wind_total_cap = sum([gen[0] for gen in curs.execute("SELECT exist_cap FROM ExistingCapacity WHERE regions == 'ON' AND tech LIKE '%WND%'")])
-solar_total_cap = sum([gen[0] for gen in curs.execute("SELECT exist_cap FROM ExistingCapacity WHERE regions == 'ON' AND tech LIKE '%SOL%'")])
-hydro_dly_total_cap = sum([gen[0] for gen in curs.execute("SELECT exist_cap FROM ExistingCapacity WHERE regions == 'ON' AND tech LIKE '%HYD_DLY%'")])
+    wind_cf = np.array(hourly_production['WIND']) / wind_total_cap / 1000 # MWh/GW.h to PJ/PJ
+    solar_cf = np.array(hourly_production['SOLAR']) / solar_total_cap / 1000
+    hydro_ror_cf = np.array(pd.read_csv('hydro_ror_cf.csv',index_col=0,header=0)['0'])
+    hydro_dly_cf = np.array(pd.read_csv('hydro_dly_cf_365.csv',index_col=0,header=0)['0']) * 3600 * 24 / 10**6 # GWd to PJ
 
-wind_cf = np.array(hourly_production['WIND']) / wind_total_cap / 1000 # MWh/GW.h to PJ/PJ
-solar_cf = np.array(hourly_production['SOLAR']) / solar_total_cap / 1000
-hydro_ror_cf = np.array(pd.read_csv('ieso_hydro_ror_cf.csv')['0'])
-hydro_dly_cf = np.array(pd.read_csv('ieso_hydro_dly_cf.csv')['0']) * 3600 * 24 / 10**6 # GWd to PJ
+    return dict({'WIND':wind_cf, 'SOLAR':solar_cf, 'HYDRO_ROR':hydro_ror_cf, 'HYDRO_DLY':hydro_dly_cf})
 
-hydro_dly_seas_act = hydro_dly_cf * hydro_dly_total_cap
 
-# Run these separately to keep the database in order
-for h in range(8760):
-    curs.execute(f"""REPLACE INTO
-                 CapacityFactorTech(regions, season_name, time_of_day_name, tech, cf_tech)
-                 VALUES('ON', '{DDD(seas_8760[h])}', '{HH(tofd_8760[h])}', 'E_WND_ON', {wind_cf[h]})""")
-for h in range(8760):
-    curs.execute(f"""REPLACE INTO
-                 CapacityFactorTech(regions, season_name, time_of_day_name, tech, cf_tech)
-                 VALUES('ON', '{DDD(seas_8760[h])}', '{HH(tofd_8760[h])}', 'E_SOL_PV', {solar_cf[h]})""")
-for h in range(8760):
-    curs.execute(f"""REPLACE INTO
-                 CapacityFactorTech(regions, season_name, time_of_day_name, tech, cf_tech)
-                 VALUES('ON', '{DDD(seas_8760[h])}', '{HH(tofd_8760[h])}', 'E_HYD_ROR', {hydro_ror_cf[h]})""")
+
+def get_total_capacity(vre_type):
     
-for period in range(2020,2055,5):
-    for d in range(365):
-        curs.execute(f"""REPLACE INTO
-                    MinSeasonalActivity(regions, periods, season_name, tech, minact, minact_units)
-                    VALUES('ON', {period}, '{DDD(seas_8760[d])}', 'E_HYD_DLY', {hydro_dly_seas_act[d]}, 'PJ')""")
-        curs.execute(f"""REPLACE INTO
-                    MaxSeasonalActivity(regions, periods, season_name, tech, maxact, maxact_units)
-                    VALUES('ON', {period}, '{DDD(seas_8760[d])}', 'E_HYD_DLY', {hydro_dly_seas_act[d]}, 'PJ')""")
+    conn = sqlite3.connect(coders_db)
+    curs = conn.cursor()
+
+    tech_like = dict({'WIND':'%WND%', 'SOLAR':'%SOL%', 'HYDRO_ROR':'%HYD_ROR%', 'HYDRO_DLY':'%HYD_DLY%'})[vre_type]
+
+    cap = sum([gen[0] for gen in curs.execute(f"SELECT exist_cap FROM ExistingCapacity WHERE regions == 'ON' AND tech LIKE '{tech_like}'")])
+
+    conn.close()
+
+    return cap
 
 
-    
-conn.commit()
-conn.close()
+
+def write_to_coders_db(download=False, update_cache=False):
+
+    cfs = get_capacity_factors(download=download, update_cache=update_cache)
+
+    hydro_dly_total_cap = get_total_capacity('HYDRO_DLY')
+    hydro_dly_seas_act = cfs['HYDRO_DLY'] * hydro_dly_total_cap
+
+    conn = sqlite3.connect(coders_db)
+    curs = conn.cursor()
+
+    # Run these separately to keep the database in order
+    for h in range(8760):
+        curs.execute(f"""REPLACE INTO
+                    CapacityFactorTech(regions, season_name, time_of_day_name, tech, cf_tech)
+                    VALUES('ON', '{DDD(seas_8760[h])}', '{HH(tofd_8760[h])}', 'E_WND_ON', {cfs['WIND'][h]})""")
+    for h in range(8760):
+        curs.execute(f"""REPLACE INTO
+                    CapacityFactorTech(regions, season_name, time_of_day_name, tech, cf_tech)
+                    VALUES('ON', '{DDD(seas_8760[h])}', '{HH(tofd_8760[h])}', 'E_SOL_PV', {cfs['SOLAR'][h]})""")
+    for h in range(8760):
+        curs.execute(f"""REPLACE INTO
+                    CapacityFactorTech(regions, season_name, time_of_day_name, tech, cf_tech)
+                    VALUES('ON', '{DDD(seas_8760[h])}', '{HH(tofd_8760[h])}', 'E_HYD_ROR', {cfs['HYDRO_ROR'][h]})""")
+        
+    for period in range(2020,2055,5):
+        for d in range(365):
+            curs.execute(f"""REPLACE INTO
+                        MinSeasonalActivity(regions, periods, season_name, tech, minact, minact_units)
+                        VALUES('ON', {period}, '{DDD(seas_8760[d])}', 'E_HYD_DLY', {hydro_dly_seas_act[d]}, 'PJ')""")
+            curs.execute(f"""REPLACE INTO
+                        MaxSeasonalActivity(regions, periods, season_name, tech, maxact, maxact_units)
+                        VALUES('ON', {period}, '{DDD(seas_8760[d])}', 'E_HYD_DLY', {hydro_dly_seas_act[d]}, 'PJ')""")
+
+    conn.commit()
+    conn.close()

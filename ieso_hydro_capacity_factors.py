@@ -39,8 +39,10 @@ for r in range(len(ieso_hydro_gens)):
 
 output_ror = np.zeros(shape=(8760,1))
 cap_ror = np.zeros(shape=(8760,1))
-output_dly = np.zeros(shape=(365,1))
-cap_dly = np.zeros(shape=(365,1))
+output_dly_365 = np.zeros(shape=(365,1))
+cap_dly_365 = np.zeros(shape=(365,1))
+output_dly_8760 = np.zeros(shape=(8760,1))
+cap_dly_8760 = np.zeros(shape=(8760,1))
 
 
 days_in_months = [31,28,31,30,31,30,31,31,30,31,30,31]
@@ -63,12 +65,19 @@ for month in range(12):
                     cap_ror[H] += int(get_ieso_value(ieso_data, gen, 'Capability', month, day, hour))
                 except:
                     print(f"Value error for {gen}, {to_date(month, day)}, hour {hour+1}")
+
+            for gen in dly_gens:
+                try:
+                    output_dly_8760[H] += int(get_ieso_value(ieso_data, gen, 'Output', month, day, hour))
+                    cap_dly_8760[H] += int(get_ieso_value(ieso_data, gen, 'Capability', month, day, hour))
+                except:
+                    print(f"Value error for {gen}, {to_date(month, day)}, hour {hour+1}")
             
             # sum days output
             for gen in dly_gens:
                 try:
-                    output_dly[D] += int(get_ieso_value(ieso_data, gen, 'Output', month, day, hour))
-                    cap_dly[D] += int(get_ieso_value(ieso_data, gen, 'Capability', month, day, hour))
+                    output_dly_365[D] += int(get_ieso_value(ieso_data, gen, 'Output', month, day, hour))
+                    cap_dly_365[D] += int(get_ieso_value(ieso_data, gen, 'Capability', month, day, hour))
                 except:
                     print(f"Value error for {gen}, {to_date(month, day)}, hour {hour+1}")
 
@@ -78,13 +87,21 @@ for month in range(12):
         print(f"Days completed: {D} / 365")
 
 cf_ror = output_ror / cap_ror
-cf_dly = output_dly / cap_dly
+cf_dly_365 = output_dly_365 / cap_dly_365
+cf_dly_8760 = output_dly_8760 / cap_dly_8760
 
 plot.figure(1)
 plot.plot(cf_ror)
 plot.figure(2)
-plot.plot(cf_dly)
-plot.show()
+plot.plot(cf_dly_365)
+plot.figure(3)
+plot.plot(cf_dly_8760)
 
 pd.DataFrame(cf_ror).to_csv('hydro_ror_cf.csv')
-pd.DataFrame(cf_dly).to_csv('hydro_dly_cf.csv')
+pd.DataFrame(cf_dly_365).to_csv('hydro_dly_cf_365.csv')
+pd.DataFrame(cf_dly_8760).to_csv('hydro_dly_cf_8760.csv')
+pd.DataFrame(output_ror).to_csv('hydro_ror_production.csv')
+pd.DataFrame(output_dly_365).to_csv('hydro_dly_production_365.csv')
+pd.DataFrame(output_dly_8760).to_csv('hydro_dly_production_8760.csv')
+
+plot.show()

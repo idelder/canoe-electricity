@@ -14,7 +14,7 @@ from string_cleaner import string_cleaner
 from datetime import date
 import solar_capacity_factor
 import numpy as np
-import coders_data
+import coders_api
 
 
 
@@ -116,14 +116,14 @@ curs.execute("""SELECT t_day FROM time_of_day""")
 times_of_day = [t_day[0] for t_day in curs.fetchall()]
 
 # Collect generic tech data. Need this now to get lifetimes for viable existing vintages
-generic_json = coders_data.get_json(end_point='generation_generic',from_cache=pull_from_cache)
+generic_json = coders_api.get_json(end_point='generation_generic',from_cache=pull_from_cache)
 generic_techs = dict({translator['generator_types'][tech['generation_type'].upper()]['CANOE_tech']: tech for tech in generic_json})
 
 # Collect existing generator data
-existing_gen = coders_data.get_json(end_point='generators',from_cache=pull_from_cache)
+existing_gen = coders_api.get_json(end_point='generators',from_cache=pull_from_cache)
 
 # Collect evolving cost data
-cost_json = coders_data.get_json(end_point='generation_cost_evolution',from_cache=pull_from_cache)
+cost_json = coders_api.get_json(end_point='generation_cost_evolution',from_cache=pull_from_cache)
 evolving_cost = dict({translator['generator_types'][tech['gen_type'].upper()]['CANOE_tech']: tech for tech in cost_json})
 
 # Add future model periods
@@ -141,7 +141,7 @@ for region in all_regions:
 
 
 # Add storage technology data
-storage_exs = coders_data.get_json(end_point='storage',from_cache=pull_from_cache)
+storage_exs = coders_api.get_json(end_point='storage',from_cache=pull_from_cache)
 
 old_storage_techs = set() # Storage techs without duration disaggregation to be removed
 for storage in storage_exs:
@@ -390,7 +390,7 @@ for interties in translator['transfer_regions'].keys():
     intertie_flows.update({tech: {region_1_CANOE: from_region_1, region_2_CANOE: from_region_2}})
 
 
-interfaces = coders_data.get_json(end_point='interface_capacities',from_cache=pull_from_cache)
+interfaces = coders_api.get_json(end_point='interface_capacities',from_cache=pull_from_cache)
 
 interface_techs = dict() # keys are CANOE techs
 
@@ -545,7 +545,7 @@ for tx_tech in tx_techs + dummy_techs:
                 VALUES("{translator['generator_types'][tx_tech]['output_comm']}")""")
 
 # Regional parameters
-ca_sys_params = coders_data.get_json(end_point='CA_system_parameters',from_cache=pull_from_cache)
+ca_sys_params = coders_api.get_json(end_point='CA_system_parameters',from_cache=pull_from_cache)
 for province in ca_sys_params:
 
     region = translator['regions'][province['province'].upper()]['CANOE_region']
