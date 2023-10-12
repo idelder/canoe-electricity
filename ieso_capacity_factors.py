@@ -1,6 +1,7 @@
 """
 Gets aggregate 2020 electricity production by fuel type from IESO data
 to calculate 8760 capacity factors
+Written by Ian David Elder for the CANOE model
 """
 
 import os
@@ -10,43 +11,46 @@ import json
 import numpy as np
 import xmltodict
 import pandas as pd
+from pathlib import Path
 from matplotlib import pyplot
+from translator import *
 
-# TODO: replace with something in the translator db
-# times of day and season names for 8760 hours
-tofd_8760 = 1 + np.mod( np.arange(8760) , 24 )
-seas_8760 = 1 + np.int32(np.floor( np.arange(8760) / 24 ))
 
-HH = lambda h: 'H' + ('0' if h<10 else '') + str(h)
-DDD = lambda d: 'D' + ('0' if d<100 else '') + ('0' if d<10 else '') + str(d)
+
+data_year = 2020
 
 this_dir = os.path.realpath(os.path.dirname(__file__)) + "/"
+translation_file = this_dir + "CODERS_CANOE_translation.sqlite"
 coders_db = this_dir + "coders_db.sqlite"
 
-def get_ieso_production(download=False, update_cache=False):
+ieso_data = this_dir + "ieso_data/"
+cache = ieso_data +  f"ieso_gen_hourly_{data_year}.txt"
 
-    data = None # do you have to initialize variables in python? feels wrong not to
-    if (download):
 
-        url = 'http://reports.ieso.ca/public/GenOutputbyFuelHourly/PUB_GenOutputbyFuelHourly_2020.xml'
+
+def get_ieso_production(download=False):
+
+    data = None
+    if (download or not os.path.isfile(cache)):
+
+        url = f"http://reports.ieso.ca/public/GenOutputbyFuelHourly/PUB_GenOutputbyFuelHourly_{data_year}.xml"
         xml_data = requests.get(url).content
         data = json.dumps(xmltodict.parse(xml_data))
 
-        if update_cache:
-            # Overwrite local data cache with newly downloaded file
-            file = open('ieso_gen_hourly_2020.txt', 'w')
-            file.write(data)
-            file.close()
+        # Overwrite local data cache with newly downloaded file
+        file = open(cache, 'w')
+        file.write(data)
+        file.close()
 
-        print('Downloaded hourly production data from IESO')
+        print(f"Downloaded and cached {data_year} hourly production data from IESO")
 
     else:
 
         # Pull data from saved json text file
-        file = open('ieso_gen_hourly_2020.txt')
+        file = open(cache)
         data = json.loads(file.read())
 
-        print('Got hourly IESO production data from local cache')
+        print(f"Got {data_year} hourly IESO production data from local cache")
 
     if data == None: return None
 
@@ -78,13 +82,21 @@ def get_capacity_factors(download=False, update_cache=False):
 
     wind_total_cap = get_total_capacity('WIND')
     solar_total_cap = get_total_capacity('SOLAR')
+    hydro_total_cap = get_total_capacity('HYDRO')
 
     wind_cf = np.array(hourly_production['WIND']) / wind_total_cap / 1000 # MWh/GW.h to PJ/PJ
     solar_cf = np.array(hourly_production['SOLAR']) / solar_total_cap / 1000
-    hydro_ror_cf = np.array(pd.read_csv('hydro_ror_cf.csv',index_col=0,header=0)['0'])
-    hydro_dly_cf = np.array(pd.read_csv('hydro_dly_cf_365.csv',index_col=0,header=0)['0']) * 3600 * 24 / 10**6 # GWd to PJ
+    hydro_cf = np.array(hourly_production['HYDRO']) / hydro_total_cap / 1000
+    hydro_ror_cf = np.array(pd.read_csv(ieso_data + 'hydro_ror_cf.csv',index_col=0,header=0)['0'])
+    hydro_dly_cf = np.array(pd.read_csv(ieso_data + 'hydro_dly_cf_365.csv',index_col=0,header=0)['0']) * 3600 * 24 / 10**6 # GWd to PJ
 
-    return dict({'WIND':wind_cf, 'SOLAR':solar_cf, 'HYDRO_ROR':hydro_ror_cf, 'HYDRO_DLY':hydro_dly_cf})
+    return dict({
+        'WIND':wind_cf,
+        'SOLAR':solar_cf,
+        'HYDRO_ROR':hydro_ror_cf,
+        'HYDRO_DLY':hydro_dly_cf,
+        'HYDRO':hydro_cf
+        })
 
 
 
@@ -93,7 +105,13 @@ def get_total_capacity(vre_type):
     conn = sqlite3.connect(coders_db)
     curs = conn.cursor()
 
-    tech_like = dict({'WIND':'%WND%', 'SOLAR':'%SOL%', 'HYDRO_ROR':'%HYD_ROR%', 'HYDRO_DLY':'%HYD_DLY%'})[vre_type]
+    tech_like = dict({
+        'WIND':'%WND%',
+        'SOLAR':'%SOL%',
+        'HYDRO_ROR':'%HYD_ROR%',
+        'HYDRO_DLY':'%HYD_DLY%',
+        'HYDRO':'%HYD%'
+        })[vre_type]
 
     cap = sum([gen[0] for gen in curs.execute(f"SELECT exist_cap FROM ExistingCapacity WHERE regions == 'ON' AND tech LIKE '{tech_like}'")])
 
@@ -117,24 +135,24 @@ def write_to_coders_db(download=False, update_cache=False):
     for h in range(8760):
         curs.execute(f"""REPLACE INTO
                     CapacityFactorTech(regions, season_name, time_of_day_name, tech, cf_tech)
-                    VALUES('ON', '{DDD(seas_8760[h])}', '{HH(tofd_8760[h])}', 'E_WND_ON', {cfs['WIND'][h]})""")
+                    VALUES('ON', '{seas_8760[h]}', '{tofd_8760[h]}', 'E_WND_ON', {cfs['WIND'][h]})""")
     for h in range(8760):
         curs.execute(f"""REPLACE INTO
                     CapacityFactorTech(regions, season_name, time_of_day_name, tech, cf_tech)
-                    VALUES('ON', '{DDD(seas_8760[h])}', '{HH(tofd_8760[h])}', 'E_SOL_PV', {cfs['SOLAR'][h]})""")
+                    VALUES('ON', '{seas_8760[h]}', '{tofd_8760[h]}', 'E_SOL_PV', {cfs['SOLAR'][h]})""")
     for h in range(8760):
         curs.execute(f"""REPLACE INTO
                     CapacityFactorTech(regions, season_name, time_of_day_name, tech, cf_tech)
-                    VALUES('ON', '{DDD(seas_8760[h])}', '{HH(tofd_8760[h])}', 'E_HYD_ROR', {cfs['HYDRO_ROR'][h]})""")
+                    VALUES('ON', '{seas_8760[h]}', '{tofd_8760[h]}', 'E_HYD_ROR', {cfs['HYDRO_ROR'][h]})""")
         
     for period in range(2020,2055,5):
         for d in range(365):
             curs.execute(f"""REPLACE INTO
                         MinSeasonalActivity(regions, periods, season_name, tech, minact, minact_units)
-                        VALUES('ON', {period}, '{DDD(seas_8760[d])}', 'E_HYD_DLY', {hydro_dly_seas_act[d]}, 'PJ')""")
+                        VALUES('ON', {period}, '{seas_8760[d]}', 'E_HYD_DLY', {hydro_dly_seas_act[d]}, 'PJ')""")
             curs.execute(f"""REPLACE INTO
                         MaxSeasonalActivity(regions, periods, season_name, tech, maxact, maxact_units)
-                        VALUES('ON', {period}, '{DDD(seas_8760[d])}', 'E_HYD_DLY', {hydro_dly_seas_act[d]}, 'PJ')""")
+                        VALUES('ON', {period}, '{seas_8760[d]}', 'E_HYD_DLY', {hydro_dly_seas_act[d]}, 'PJ')""")
 
     conn.commit()
     conn.close()

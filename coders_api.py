@@ -1,7 +1,12 @@
+"""
+This script gets a requested table from the CODERS API, and handles local caching
+Written by Ian David Elder for the TEMOA Canada / CANOE model
+"""
+
 import requests
 import json
 import os
-from string_cleaner import string_cleaner
+from tools import string_cleaner
 
 this_dir = os.path.realpath(os.path.dirname(__file__)) + "/"
 coders_cache = this_dir + "coders_cache/"

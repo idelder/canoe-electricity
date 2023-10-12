@@ -3,18 +3,14 @@ This script pulls data from the CODERS database and fills a TEMOA schema
 Written by Ian David Elder for the TEMOA Canada / CANOE model
 """
 
-
-
-import requests
 import sqlite3
 import shutil
 import os
 import intertie_transfers
-from string_cleaner import string_cleaner
-from datetime import date
-import solar_capacity_factor
+from tools import string_cleaner
 import numpy as np
 import coders_api
+from translator import *
 
 
 
@@ -22,7 +18,6 @@ import coders_api
 this_dir = os.path.realpath(os.path.dirname(__file__)) + "/"
 schema_file = this_dir + "temoa_schema.sqlite"
 database_file = this_dir + "coders_db.sqlite"
-translation_file = this_dir + "CODERS_CANOE_translation.sqlite"
 
 # If db does not exist make a copy of the schema
 if not os.path.exists(database_file):
@@ -30,90 +25,9 @@ if not os.path.exists(database_file):
 
 
 
-# Connect to the translator file
-conn = sqlite3.connect(translation_file)
-curs = conn.cursor()
-
-# Convert translator database into a dictionary to speed things up
-# usage: translator['table name']['value of first column']['column value needed']
-translator = dict()
-
-# Get future model periods
-curs.execute("""SELECT periods FROM model_periods""")
-model_periods = [period[0] for period in curs.fetchall()]
-
-# Get all regions
-curs.execute("""SELECT CANOE_region FROM regions""")
-all_regions = set(region[0] for region in curs.fetchall())
-
-# Get emission commodity
-curs.execute("""SELECT CANOE_unit FROM units WHERE metric = 'emission_commodity'""")
-emis_comm = curs.fetchone()[0]
-
-# Get capacity to activity
-fetch = curs.execute("""SELECT CANOE_unit, conversion_factor FROM units WHERE metric = 'capacity_to_activity'""").fetchone()
-c2a_unit, c2a = fetch[0], fetch[1]
-
-# hour out of 8760 -> time of day or season name
-curs.execute("""SELECT time_of_day FROM time""")
-tofd_8760 = [tofd[0] for tofd in curs.fetchall()]
-curs.execute("""SELECT season FROM time""")
-seas_8760 = [seas[0] for seas in curs.fetchall()]
-
-
-
-curs.execute("SELECT name FROM sqlite_master WHERE type='table';")
-all_tables = [table[0] for table in curs.fetchall()]
-
-for table in all_tables:
-    translator.update({table: dict()})
-
-    rows = curs.execute("SELECT * FROM " + table)
-    column_names = [column[0] for column in rows.description]
-    
-    rows = rows.fetchall()
-
-    for r in range(len(rows)):
-        translator[table].update({rows[r][0]: dict()})
-
-        for c in range(len(column_names)):
-            translator[table][rows[r][0]].update({column_names[c]: rows[r][c]})
-
-
-
-# Get global values
-rows = curs.execute("SELECT * FROM global_values")
-column_names = [column[0] for column in rows.description]
-rows = rows.fetchall()
-
-global_values = list()
-for r in range(len(rows)):
-
-    global_value = dict()
-    global_values.append(global_value)
-
-    for c in range(len(column_names)):
-        global_value.update({column_names[c]: rows[r][c]})
-
-
-
-# Whether to pull data from cache or download
-pull_from_cache = translator['pull_parameters']['pull_from_cache']['value'] == 'true'
-
-
-
-# Close connection to translator
-conn.close()
-
-
-
 # Connect to the new database file
 conn = sqlite3.connect(database_file)
 curs = conn.cursor() # Cursor object interacts with the sqlite db
-
-# Get times of day
-curs.execute("""SELECT t_day FROM time_of_day""")
-times_of_day = [t_day[0] for t_day in curs.fetchall()]
 
 # Collect generic tech data. Need this now to get lifetimes for viable existing vintages
 generic_json = coders_api.get_json(end_point='generation_generic',from_cache=pull_from_cache)
@@ -337,7 +251,7 @@ for tech in list(generic_techs.keys()):
             if emis_act != 0:
                 curs.execute(f"""REPLACE INTO
                             EmissionActivity(regions, emis_comm, input_comm, tech, vintage, output_comm, emis_act, emis_act_units, emis_act_notes)
-                            VALUES("{region}", "{emis_comm}", "{input_comm}", "{tech}", "{vint}", "{output_comm}", "{emis_act}", "{translator['units']['emission_activity']['CANOE_unit']}", "{description}")""")
+                            VALUES("{region}", "{translator['units']['emission_commodity']['CANOE_unit']}", "{input_comm}", "{tech}", "{vint}", "{output_comm}", "{emis_act}", "{translator['units']['emission_activity']['CANOE_unit']}", "{description}")""")
 
             for period in model_periods:
                 
@@ -572,9 +486,20 @@ for province in ca_sys_params:
             curs.execute(f"""REPLACE INTO
                         Efficiency(regions, input_comm, tech, vintage, output_comm, efficiency)
                         VALUES("{region}", "{input}", "{tech}", {model_periods[0]}, "{output}", "{eff}")""")
+            
+
+
+# Capacity credits for new capacity
+for tech in translator['new_capacity'].keys():
+
+
+    # duplicate exs tech to new-N
+    # get ccs from csvs by region
+    # add to db by cap batch
                  
 
 
+# MUST BE LAST
 # Overwrite with global values from translator database
 for region in all_regions:
     for global_value in global_values:

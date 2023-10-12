@@ -2,6 +2,8 @@
 Gets hydro run-of-river and daily-dispatch availability factors
 by 8760 hours and 365 days, respectively from IESO public data
 then dumps into csv files in this folder for ieso_capacity_factors.py to use
+
+This script takes like an hour to run. If you have to run it multiple times it needs a rewrite
 """
 
 import requests
@@ -12,17 +14,22 @@ import json
 import sqlite3
 import os
 
-weather_year = 2020
+
+
+this_dir = os.path.realpath(os.path.dirname(__file__)) + "/"
+ieso_data = this_dir + "ieso_data/"
+data_year = 2020
+
 
 # I think it's a warcrime to use lambda functions like this
-url = lambda YYYYMM: f"""http://reports.ieso.ca/public/GenOutputCapabilityMonth/PUB_GenOutputCapabilityMonth_{YYYYMM}.csv"""
-get_ieso_data = lambda YYYYMM: pd.read_csv(url(YYYYMM), skiprows=3, index_col=False)
-DDMM = lambda dm: str(dm) if dm>9 else '0' + str(dm)
-to_date = lambda month, day: f"{weather_year}-{DDMM(month+1)}-{DDMM(day+1)}"
+url = lambda month: f"""http://reports.ieso.ca/public/GenOutputCapabilityMonth/PUB_GenOutputCapabilityMonth_{str(data_year) + NN(month + 1)}.csv"""
+get_ieso_data = lambda month: pd.read_csv(url(month), skiprows=3, index_col=False)
+NN = lambda dm: str(dm) if dm>9 else '0' + str(dm)
+to_date = lambda month, day: f"{data_year}-{NN(month+1)}-{NN(day+1)}"
 get_ieso_value = lambda ieso_data, generator, measurement, month, day, hour: ieso_data.loc[(ieso_data['Generator'] == generator) & (ieso_data['Measurement'] == measurement) & (ieso_data['Delivery Date'] == to_date(month, day))]['Hour ' + str(hour+1)].values[0]
 
 
-ieso_hydro_gens = pd.read_excel('ieso_hydro_generators.xlsx', index_col=False, header=None)
+ieso_hydro_gens = pd.read_excel(ieso_data + 'ieso_hydro_generators.csv', index_col=False, header=None)
 ror_gens = []
 dly_gens = []
 
@@ -48,12 +55,12 @@ cap_dly_8760 = np.zeros(shape=(8760,1))
 days_in_months = [31,28,31,30,31,30,31,31,30,31,30,31]
 
 
-# As lazy and slow as possible but how often is it really gonna run
+# As inefficient as possible but how often is it really gonna run
 H = 0
 D = 0
 for month in range(12):
 
-    ieso_data = get_ieso_data(str(weather_year) + DDMM(month + 1))
+    ieso_data = get_ieso_data(month)
 
     for day in range(days_in_months[month]):
         for hour in range(24):
@@ -97,11 +104,11 @@ plot.plot(cf_dly_365)
 plot.figure(3)
 plot.plot(cf_dly_8760)
 
-pd.DataFrame(cf_ror).to_csv('hydro_ror_cf.csv')
-pd.DataFrame(cf_dly_365).to_csv('hydro_dly_cf_365.csv')
-pd.DataFrame(cf_dly_8760).to_csv('hydro_dly_cf_8760.csv')
-pd.DataFrame(output_ror).to_csv('hydro_ror_production.csv')
-pd.DataFrame(output_dly_365).to_csv('hydro_dly_production_365.csv')
-pd.DataFrame(output_dly_8760).to_csv('hydro_dly_production_8760.csv')
+pd.DataFrame(cf_ror).to_csv(ieso_data + 'hydro_ror_cf.csv')
+pd.DataFrame(cf_dly_365).to_csv(ieso_data + 'hydro_dly_cf_365.csv')
+pd.DataFrame(cf_dly_8760).to_csv(ieso_data + 'hydro_dly_cf_8760.csv')
+pd.DataFrame(output_ror).to_csv(ieso_data + 'hydro_ror_production.csv')
+pd.DataFrame(output_dly_365).to_csv(ieso_data + 'hydro_dly_production_365.csv')
+pd.DataFrame(output_dly_8760).to_csv(ieso_data + 'hydro_dly_production_8760.csv')
 
 plot.show()

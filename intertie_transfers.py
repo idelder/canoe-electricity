@@ -1,5 +1,5 @@
 """
-This script calculates pricing for Canada-US intertie transfers
+This script gets 8760 transfer flows per regional boundary
 Written by Ian David Elder for the TEMOA Canada / CANOE model
 """
 
