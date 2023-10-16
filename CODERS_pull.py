@@ -82,7 +82,7 @@ old_techs = set()
 for region in config.batched_cap.keys():
     if region == 'EX': continue
 
-    tech_variants.update({region: dict()})
+    tech_variants[region] = dict()
 
     # For techs with specified batch sizes get from csv
     for base_tech in config.all_techs:
@@ -94,13 +94,13 @@ for region in config.batched_cap.keys():
         elif n_batches > 1: variants = [f"{base_tech}-EXS", *[f"{base_tech}-NEW-{n}" for n in range(1,n_batches+1)]] # Specified batches
         else: variants = [f"{base_tech}-EXS", f"{base_tech}-NEW"] # Not specified or 1 so allow new and existing
 
-        tech_variants.update({base_tech: variants})
+        tech_variants[base_tech] = variants
 
         # Add these additional techs to the generic techs dict
         old_techs.add(base_tech)
         for variant in variants:
-            generic_techs.update({variant: generic_techs[base_tech]})
-            if is_new(variant): evolving_cost.update({variant: evolving_cost[base_tech]})
+            generic_techs[variant] = generic_techs[base_tech]
+            if is_new(variant): evolving_cost[variant] = evolving_cost[base_tech]
 
 
 
@@ -127,19 +127,19 @@ for storage in storage_exs:
     tech = f"{CANOE_tech}-{duration}H"
 
     # Some nomenclature differences between merged tables
-    storage.update({'install_capacity_in_mw': storage['storage_capacity_in_mw']})
-    storage.update({'gen_type': tech}) # Updated duration-tagged tech
+    storage['install_capacity_in_mw'] = storage['storage_capacity_in_mw']
+    storage['gen_type'] = tech # Updated duration-tagged tech
 
     # Have to add updated duration-tagged tech to translator
-    translator['generator_types'].update({tech: dict()})
-    translator['generator_types'][tech].update({'CANOE_tech': tech})
+    translator['generator_types'][tech] = dict()
+    translator['generator_types'][tech]['CANOE_tech'] = tech
 
     # Update dicts with new storage tech name, new and existing
-    generic_techs.update({f"{tech}-NEW": generic_techs[CANOE_tech]})
-    generic_techs.update({f"{tech}-EXS": generic_techs[CANOE_tech]})
+    generic_techs[f"{tech}-NEW"] = generic_techs[CANOE_tech]
+    generic_techs[f"{tech}-EXS"] = generic_techs[CANOE_tech]
     existing_gen.append(storage.copy())
-    evolving_cost.update({f"{tech}-NEW": evolving_cost[CANOE_tech]})
-    evolving_cost.update({f"{tech}-EXS": evolving_cost[CANOE_tech]})
+    evolving_cost[f"{tech}-NEW"] = evolving_cost[CANOE_tech]
+    evolving_cost[f"{tech}-EXS"] = evolving_cost[CANOE_tech]
 
     # Slate old tech name for removal
     old_techs.add(CANOE_tech)
@@ -203,9 +203,9 @@ for generator in existing_gen:
         continue
     
     # Keeping a record of valid region-tech-vintage sets (existing here but future added later)
-    if region not in rtv_data.keys(): rtv_data.update({region: dict()})
-    if tech not in rtv_data[region].keys(): rtv_data[region].update({tech: dict()})
-    if vint not in rtv_data[region][tech].keys(): rtv_data[region][tech].update({vint: dict({'capacity': capacity, 'description': generator_name})})
+    if region not in rtv_data.keys(): rtv_data[region] = dict()
+    if tech not in rtv_data[region].keys(): rtv_data[region][tech] = dict()
+    if vint not in rtv_data[region][tech].keys(): rtv_data[region][tech][vint] = {'capacity': capacity, 'description': generator_name}
     else:
         rtv_data[region][tech][vint]['capacity'] += capacity
         rtv_data[region][tech][vint]['description'] += " - " + generator_name
@@ -295,7 +295,7 @@ for tech in generic_techs.keys():
 
         # Give all techs future vintages
         if tech not in rtv_data[region].keys():
-            rtv_data[region].update({tech: dict()})
+            rtv_data[region][tech] = dict()
         [rtv_data[region][tech].update({period: {'capacity': 0, 'description': description}}) for period in model_periods]
 
         for vint in rtv_data[region][tech]:
@@ -370,7 +370,7 @@ for interties in translator['transfer_regions'].keys():
 
     from_region_1, from_region_2 = intertie_transfers.get_transfers(region_1, region_2, translator['transfer_regions'][interties]['type'], from_cache=from_cache)
 
-    intertie_flows.update({tech: {region_1_CANOE: from_region_1, region_2_CANOE: from_region_2}})
+    intertie_flows[tech] = {region_1_CANOE: from_region_1, region_2_CANOE: from_region_2}
 
 
 interfaces = coders_api.get_json(end_point='interface_capacities',from_cache=from_cache)
@@ -396,15 +396,13 @@ for interface in interfaces:
     if (from_region == 'EX') != (to_region == 'EX') and intertie_flows[tech][from_region] is None: continue
 
     if tech not in interface_techs.keys():
-        interface_techs.update({
-            tech: dict({
+        interface_techs[tech] = {
                 'description': string_cleaner(interties),
                 'regions': [from_region, to_region],
                 'transfers_from': {from_region: intertie_flows[tech][from_region], to_region: intertie_flows[tech][to_region]},
                 'capacity_from': {from_region: {'summer': 0, 'winter': 0}, to_region: {'summer': 0, 'winter': 0}},
                 'efficiency': 1.0
-            })
-        })
+            }
     elif string_cleaner(interties) not in interface_techs[tech]['description']:
         interface_techs[tech]['description'] += ' - ' + string_cleaner(interties)
 

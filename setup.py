@@ -74,7 +74,7 @@ class config:
         # General pull parameters
         config.params = dict()
         for param in config.translator['pull_parameters']:
-            config.params.update({param: config.translator['pull_parameters'][param]['value']})
+            config.params[param] = config.translator['pull_parameters'][param]['value']
 
         # Batched new capacities
         config.batched_cap = dict()
@@ -82,7 +82,7 @@ class config:
             if region == 'EX': continue
 
             batches = pd.read_excel(config.batch_file, sheet_name=region, index_col=0, skiprows=2)
-            config.batched_cap.update({region: batches})
+            config.batched_cap[region] = batches
 
         # New capacity limits
         config.cap_limits = dict()
@@ -90,7 +90,7 @@ class config:
             if region == 'EX': continue
 
             limits = pd.read_excel(config.cap_limit_file, sheet_name=region, index_col=0, skiprows=2)
-            config.cap_limits.update({region: limits})
+            config.cap_limits[region] = limits
 
 
 
@@ -104,7 +104,7 @@ class config:
         all_tables = [table[0] for table in curs.fetchall()]
 
         for table in all_tables:
-            config.translator.update({table: dict()})
+            config.translator[table] = dict()
 
             rows = curs.execute("SELECT * FROM " + table)
             column_names = [column[0] for column in rows.description]
@@ -112,10 +112,10 @@ class config:
             rows = rows.fetchall()
 
             for r in range(len(rows)):
-                config.translator[table].update({rows[r][0]: dict()})
+                config.translator[table][rows[r][0]] = dict()
 
                 for c in range(len(column_names)):
-                    config.translator[table][rows[r][0]].update({column_names[c]: rows[r][c]})
+                    config.translator[table][rows[r][0]][column_names[c]] = rows[r][c]
 
 
 
@@ -133,7 +133,7 @@ class config:
             config.global_overrides.append(global_override)
 
             for c in range(len(column_names)):
-                global_override.update({column_names[c]: rows[r][c]})
+                global_override[column_names[c]] = rows[r][c]
 
 
 

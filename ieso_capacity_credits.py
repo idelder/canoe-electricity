@@ -27,11 +27,12 @@ ieso_data = this_dir + "ieso_data/"
 cc_file = ieso_data + 'capacity_credits.csv'
 reference = f"{params['capacity_credit_reference']} [{params['ieso_reference'].replace('<year>',data_year)}]"
 
+_show_plots = False
 
 
-vres = ['WIND_ONSHORE','SOLAR_PV']
+vres = ['WIND_ONSHORE','SOLAR_PV','HYDRO_RUN']
 cfs = ieso_cf.get_capacity_factors() # gets hydro daily as 365 days
-cfs.update({'HYDRO_DLY':pd.read_csv(ieso_data + 'hydro_dly_cf_8760.csv',index_col=0,header=0)['0']})
+cfs['HYDRO_DLY'] = pd.read_csv(ieso_data + 'hydro_dly_cf_8760.csv',index_col=0,header=0)['0']
 
 intertie_flow = tools.get_file(f"http://reports.ieso.ca/public/IntertieScheduleFlowYear/PUB_IntertieScheduleFlowYear_{data_year}.csv", index_col=False, skiprows=4, nrows=8760)
 demand = tools.get_file(f"http://reports.ieso.ca/public/Demand/PUB_Demand_{data_year}.csv", index_col=False, skiprows=3, nrows=8760).rename(columns={'Ontario Demand': 'load'})
@@ -41,8 +42,8 @@ demand['net_load'] = demand['load'].copy()
 capacity_mw = dict()
 production_mwh = dict()
 for vre in vres:
-    capacity_mw.update({vre: ieso_cf.get_total_capacity(vre)*1000})
-    production_mwh.update({vre: cfs[vre] * capacity_mw[vre]})
+    capacity_mw[vre] = ieso_cf.get_total_capacity(vre)*1000
+    production_mwh[vre] = cfs[vre] * capacity_mw[vre]
     demand['net_load'] -= production_mwh[vre]
 
 
@@ -58,10 +59,14 @@ def get_capacity_credit(vre, new_mw=0, mw_step=1000):
     net_load = demand['net_load'].copy() - cfs[vre]*new_mw
     nldc = net_load.sort_values(ascending=False)
 
-    if (new_mw == 0):
-        pp.figure(vre)
+    # plot existing and first new batch
+    if (new_mw == mw_step and _show_plots):
+        pp.figure(vre + "LDC - NLDC")
         pp.plot(range(8760),ldc,label="LDC")
         pp.plot(range(8760),nldc,label="NLDC")
+        pp.xlabel("Hour")
+        pp.ylabel("Load / net load MW")
+        pp.title(vre + f" LDC vs. NLDC existing and first {mw_step} new MW")
 
     # LDC - NLDC top 100 hours
     cv = np.mean(ldc[0:100] - nldc[0:100])
@@ -87,66 +92,94 @@ def get_cc_curve(vre, mw_steps):
         new_mws.append(new_mw)
         ccs.append(get_capacity_credit(vre=vre, new_mw=new_mw, mw_step=mw_steps[i]))
 
-    pp.figure()
-    pp.plot(new_mws, ccs, label='LDC marginal 100H')
-    mean_cf = np.mean(cfs[vre])
-    pp.plot([0,new_mw_max],[mean_cf,mean_cf],'k-', label='Annual CF')
-    pp.legend(loc=1)
-    pp.title(vre)
+    if _show_plots:
+        pp.figure(vre + " CC")
+        pp.plot(new_mws, ccs, label='LDC marginal 100H')
+        mean_cf = np.mean(cfs[vre])
+        pp.plot([0,new_mw_max],[mean_cf,mean_cf],'k-', label='Annual CF')
+        pp.legend(loc=1)
+        pp.xlabel("New MW capacity")
+        pp.ylabel("Capacity credit")
+        pp.title(vre + " marginal capacity credit")
 
     return ccs
 
 
 
+def get_capacity_credits():
+
+    # Capacity credit curves per VRE
+    ccs_vres = dict()
+
+    # Largest row count (to match column lengths)
+    max_n = max([int(translator['generator_types'][vre]['new_cap_steps']) for vre in vres])
+
+    for vre in vres:
+
+        if vre not in batched_cap.index:
+            print(f"Tried to get capacity credits for {vre} but no batches specified in input files.")
+            continue
+
+        n_batches = int(translator['generator_types'][vre]['new_cap_steps'])
+        mw_steps = [0, *batched_cap.loc[vre, 1:n_batches].tolist()]
+
+        # Have to pad smaller lists to match column lengths to build the dataframe
+        ccs = [*get_cc_curve(vre, mw_steps), *[None for n in range(max_n - n_batches)]]
+
+        ccs_vres[vre] = ccs
+
+    # Print out the capacity credits and write to csv file
+    df = pd.DataFrame.from_dict(ccs_vres)
+    print(df.head(max_n+1))
+    df.to_csv(cc_file)
+
+    if _show_plots: pp.show()
+
+    return ccs_vres
+
+
+
 # Write capacity credits to CODERS database
-def write_to_coders_db(ccs_vres):
+def write_to_coders_db(show_plots=False):
+    
+    global _show_plots
+    _show_plots = show_plots
+
+    ccs_vres = get_capacity_credits()
 
     conn = sqlite3.connect(coders_db)
     curs = conn.cursor()
     
     for vre in vres:
+
+        if vre not in ccs_vres.keys(): continue # Occurs when no batches specified in input files
+
         base_tech = translator['generator_types'][vre]['CANOE_tech']
         ccs = ccs_vres[vre]
 
-        for i in range(len(ccs)):
+        # Get all variants of this vre tech
+        techs = [tech[0] for tech in curs.execute(f"SELECT tech FROM technologies WHERE tech like '%{base_tech}%'").fetchall()]
+        
+        for tech in techs:
+            
+            # Get period-vintage pairs for this variant
+            vints = [v[0] for v in curs.execute(f"SELECT vintage FROM Efficiency WHERE tech == '{tech}'").fetchall()]
+            life = curs.execute(f"SELECT life FROM LifetimeTech WHERE tech == '{tech}'").fetchone()[0]
 
-            cc = ccs[i]
-            if cc is None: break
+            for vint in vints:
+                for period in config.model_periods:
 
-            tech = f"{base_tech}-NEW-{i}" if i > 0 else base_tech
-            print(tech)
+                    if vint > period or vint + life <= period: continue
 
-            # New cap batch techs need to be in place already (CODERS_pull.py)
-            curs.execute(f"""
-                         UPDATE CapacityCredit
-                         SET
-                          cf_tech={cc},
-                          cf_tech_notes='{reference}'
-                         WHERE
-                          regions=='ON' and tech=='{tech}'
-                        """)
-    
+                    ending = tech.split("-")[-1]
+                    if ending == 'EXS': ending = 0
+                    if ending == 'NEW': ending = 1
+
+                    cc = ccs[int(ending)]
+
+                    curs.execute(f"""REPLACE INTO
+                                    CapacityCredit(regions, periods, tech, vintage, cf_tech, cf_tech_notes)
+                                    VALUES("ON", {period}, '{tech}', {vint}, {cc}, '{reference}')""")
+
     conn.commit()
     conn.close()
-
-
-
-ccs_vres = dict()
-max_n = max([int(translator['generator_types'][vre]['new_cap_steps']) for vre in vres])
-for vre in vres:
-
-    n_batches = int(translator['generator_types'][vre]['new_cap_steps'])
-    print(n_batches)
-    mw_steps = [0, *batched_cap.loc[vre, 1:n_batches].tolist()]
-
-    # Have to pad smaller lists to match lengths to build the dataframe
-    ccs = [*get_cc_curve(vre, mw_steps), *[None for n in range(max_n - n_batches)]]
-    ccs_vres.update({vre: ccs})
-
-df = pd.DataFrame.from_dict(ccs_vres)
-print(df.head(max_n+1))
-df.to_csv(cc_file)
-
-write_to_coders_db(ccs_vres)
-
-pp.show()
