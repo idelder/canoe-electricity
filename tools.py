@@ -25,7 +25,7 @@ def string_cleaner(string):
 
 
 
-def get_file(url, file_type=None, name=None, use_cache=True, **kwargs):
+def get_data(url, file_type=None, name=None, use_cache=True, **kwargs):
 
     # Get the original file name
     if name == None: name = url.split("/")[-1].split("\\")[-1]
@@ -34,6 +34,7 @@ def get_file(url, file_type=None, name=None, use_cache=True, **kwargs):
     file_type = file_type.lower()
 
     if file_type == "xml": name = os.path.splitext(name)[0] + ".json"
+    if url.split(".")[-1] != file_type: name = os.path.splitext(name)[0] + "."+file_type
     cache_file = cache_dir + name
 
     data = None
@@ -51,7 +52,6 @@ def get_file(url, file_type=None, name=None, use_cache=True, **kwargs):
         if file_type == "csv": data = pd.read_csv(url, **kwargs)
         elif "xl" in file_type: data = pd.read_excel(url, **kwargs)
         elif file_type == "xml": data = json.dumps(xmltodict.parse(requests.get(url).content))
-        print(f"Downloaded {name}.")
 
         # Try to cache
         try:

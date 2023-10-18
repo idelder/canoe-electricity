@@ -6,12 +6,15 @@ Written by Ian David Elder for the TEMOA Canada / CANOE model
 import numpy as np
 from matplotlib import pyplot
 import coders_api
+from setup import config
 
 def get_transfers(region_1, region_2, intertie_type, from_cache=False):
 
+    data_year = config.params['default_data_year']
+
     transfers = list()
-    if intertie_type == 'international': transfers = coders_api.get_json(end_point=f"international_transfers?year=2020&province={region_1}&us_region={region_2}", from_cache=from_cache)
-    elif intertie_type == 'interprovincial': transfers = coders_api.get_json(end_point=f"interprovincial_transfers?year=2020&province1={region_1}&province2={region_2}", from_cache=from_cache)
+    if intertie_type == 'international': transfers = coders_api.get_json(end_point=f"international_transfers?year={data_year}&province={region_1}&us_region={region_2}", from_cache=from_cache)
+    elif intertie_type == 'interprovincial': transfers = coders_api.get_json(end_point=f"interprovincial_transfers?year={data_year}&province1={region_1}&province2={region_2}", from_cache=from_cache)
 
     if (len(transfers) < 8760):
         print(f"Insufficient transfer data on {region_1}-{region_2}. Try switching the intertie regions.")

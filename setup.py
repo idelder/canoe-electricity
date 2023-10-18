@@ -6,9 +6,10 @@ Written by Ian David Elder for the CANOE model
 import os
 import sqlite3
 import pandas as pd
+import coders_api
 
 # I'll be honest I mostly just wanted to practice python objects
-# but maybe this will save memory some day
+# but maybe this will save memory
 class config:
 
     # File locations
@@ -34,6 +35,8 @@ class config:
         cls._get_global_overrides(curs)
 
         conn.close()
+
+        print('Instantiated setup config.')
 
         cls.instantiated = True
 
@@ -91,6 +94,10 @@ class config:
 
             limits = pd.read_excel(config.cap_limit_file, sheet_name=region, index_col=0, skiprows=2)
             config.cap_limits[region] = limits
+
+        # Collect generic tech data
+        generic_json = coders_api.get_json(end_point='generation_generic',from_cache=(config.params['pull_from_cache'] == 'true'))
+        config.generic_techs = dict({config.translator['generator_types'][tech['generation_type'].upper()]['CANOE_tech']: tech for tech in generic_json})
 
 
 

@@ -26,18 +26,18 @@ cache = ieso_data +  f"ieso_gen_hourly_{data_year}.txt"
 
 show_plots=False
 
-tech_like = dict({
+tech_like = {
         'WIND_ONSHORE':'%WND_ON%',
         'SOLAR_PV':'%SOL_PV%',
         'HYDRO_RUN':'%HYD_ROR%',
         'HYDRO_DAILY':'%HYD_DLY%',
         'HYDRO':'%HYD%'
-        })
+        }
 
 
 def get_ieso_production():
 
-    data = tools.get_file(f"http://reports.ieso.ca/public/GenOutputbyFuelHourly/PUB_GenOutputbyFuelHourly_{data_year}.xml")
+    data = tools.get_data(f"http://reports.ieso.ca/public/GenOutputbyFuelHourly/PUB_GenOutputbyFuelHourly_{data_year}.xml")
 
     fuels = ['NUCLEAR', 'GAS', 'HYDRO', 'WIND', 'SOLAR', 'BIOFUEL']
     hourly_production = dict()
@@ -102,7 +102,7 @@ def write_to_coders_db():
 
     # Hydro daily storage uses a daily energy allotment (Min/MaxSeasonalActivity)
     hydro_dly_total_cap = get_total_capacity('HYDRO_DAILY')
-    hydro_dly_seas_act = cfs['HYDRO_DAILY'] * hydro_dly_total_cap
+    hydro_dly_seas_act = cfs['HYDRO_DAILY'] * hydro_dly_total_cap * 3600/1E6 # GWh/day to PJ
 
     conn = sqlite3.connect(coders_db)
     curs = conn.cursor()
@@ -125,12 +125,13 @@ def write_to_coders_db():
     for tech in hyd_dly_variants:
         for period in config.model_periods:
             for d in range(365):
+                h = d*24
                 curs.execute(f"""REPLACE INTO
                             MinSeasonalActivity(regions, periods, season_name, tech, minact, minact_units)
-                            VALUES('ON', {period}, '{config.seas_8760[d]}', '{tech}', {hydro_dly_seas_act[d]}, 'PJ')""")
+                            VALUES('ON', {period}, '{config.seas_8760[h]}', '{tech}', {hydro_dly_seas_act[d]}, 'PJ')""")
                 curs.execute(f"""REPLACE INTO
                             MaxSeasonalActivity(regions, periods, season_name, tech, maxact, maxact_units)
-                            VALUES('ON', {period}, '{config.seas_8760[d]}', '{tech}', {hydro_dly_seas_act[d]}, 'PJ')""")
+                            VALUES('ON', {period}, '{config.seas_8760[h]}', '{tech}', {hydro_dly_seas_act[d]}, 'PJ')""")
 
     conn.commit()
     conn.close()
