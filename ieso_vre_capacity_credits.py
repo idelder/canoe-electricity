@@ -42,7 +42,7 @@ demand['net_load'] = demand['load'].copy()
 
 capacity_mw = dict()
 for vre in vres:
-    capacity_mw[vre] = ieso_cf.get_total_capacity(vre)*1000
+    capacity_mw[vre] = ieso_cf.get_database_capacity_gw(vre)*1000
     production_mwh = cfs[vre] * capacity_mw[vre]
     demand['net_load'] -= production_mwh
 

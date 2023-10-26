@@ -47,6 +47,13 @@ for period in config.model_periods:
 for h in range(8760):
     curs.execute(f"""REPLACE INTO DemandSpecificDistribution(regions, season_name, time_of_day_name, demand_name, dds)
                  VALUES("ON", '{config.seas_8760[h]}', '{config.tofd_8760[h]}', 'D_ELC', {demand['demand'][h]/total_demand})""")
+    
+curs.execute(f"""UPDATE Efficiency
+                SET efficiency = 0.80
+                WHERE tech like '%PMP%'""")
+curs.execute(f"""UPDATE Efficiency
+                SET efficiency = 0.90
+                WHERE tech like '%BAT%'""")
 
 days = ['D001','D009','D089','D103','D128','D173','D196']
 curs.execute(f"DELETE FROM time_season")
@@ -88,7 +95,21 @@ for period in config.model_periods:
     curs.execute(f"""REPLACE INTO
                 EmissionLimit(regions, periods, emis_comm, emis_limit, emis_limit_units)
                 VALUES("ON", {period}, "CO2eq", {emis[period]*base_emis}, "ktCO2eq")""")
-        
+    
+import_prices_pj = {
+    'IMP_NGS':2.24,
+    'IMP_URN_NAT':0.039487,
+    'IMP_BIO_M':10
+}
+
+for tech in import_prices_pj.keys():
+    curs.execute(f"""INSERT INTO technologies(tech, flag, sector)
+                 VALUES('{tech}', 'p', 'electric')""")
+    curs.execute(f"""REPLACE INTO Efficiency(regions, input_comm, tech, vintage, output_comm, efficiency)
+                 VALUES('ON', 'E_ethos', '{tech}', 2025, '{'E_' + tech}', 1.0)""")
+    for period in config.model_periods:
+        curs.execute(f"""REPLACE INTO CostVariable(regions, periods, tech, vintage, cost_variable)
+                    VALUES('ON', {period}, '{tech}', 2025, {import_prices_pj[tech]})""")
 
 
 conn.commit()

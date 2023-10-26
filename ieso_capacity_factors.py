@@ -9,7 +9,9 @@ import sqlite3
 import numpy as np
 import pandas as pd
 from setup import config
+from matplotlib import pyplot as pp
 import tools
+import coders_api
 
 params = config.params
 translator = config.translator
@@ -27,7 +29,7 @@ cache = ieso_data +  f"ieso_gen_hourly_{data_year}.txt"
 show_plots=False
 
 tech_like = {
-        'WIND_ONSHORE':'%WND_ON%',
+        'WIND_ONSHORE':'%WND%',
         'SOLAR_PV':'%SOL_PV%',
         'HYDRO_RUN':'%HYD_ROR%',
         'HYDRO_DAILY':'%HYD_DLY%',
@@ -37,23 +39,41 @@ tech_like = {
 
 def get_ieso_production():
 
-    data = tools.get_data(f"http://reports.ieso.ca/public/GenOutputbyFuelHourly/PUB_GenOutputbyFuelHourly_{data_year}.xml")
+    monthly = tools.get_data(f"http://reports.ieso.ca/public/GenOutputbyFuelMonthly/PUB_GenOutputbyFuelMonthly_{data_year}.xml")
+    hourly = tools.get_data(f"http://reports.ieso.ca/public/GenOutputbyFuelHourly/PUB_GenOutputbyFuelHourly_{data_year}.xml")
 
     fuels = ['NUCLEAR', 'GAS', 'HYDRO', 'WIND', 'SOLAR', 'BIOFUEL']
     hourly_production = dict()
+    annual_production = dict()
 
+    # Monthly
     for fuel in fuels:
-        hourly_production[fuel] = list()
+        annual_production[fuel] = 0
+
+        for month in range(12):
+            # Data was originally in a horribly nested xml format like:
+            # data['Document']['DocBody']['MonthData'][month 0-11]['FuelTotal'][any vals where val['Fuel'] == fuel]['EnergyGW'] = GWh per month
+            month_data = monthly['Document']['DocBody']['MonthData'][month]['FuelTotal']
+            fuel_values = [values for values in month_data if values['Fuel'] == fuel]
+            gwh_per_month = float(fuel_values[0]['EnergyGW'])
+            annual_production[fuel] += gwh_per_month * 1000
+
+    # Hourly
+    for fuel in fuels:
+        hourly_production[fuel] = np.zeros(8760)
 
         for day in range(365):
             for hour in range(24):
 
                 # Data was originally in a horribly nested xml format like:
-                # data['Document']['DocBody']['DailyData'][day 1-366]['HourlyData'][hour 1 - 24]['FuelTotal'][any vals where val['Fuel'] == fuel]['EnergyValue']['Output']
-                hour_data = data['Document']['DocBody']['DailyData'][day]['HourlyData'][hour]['FuelTotal']
+                # data['Document']['DocBody']['DailyData'][day 1-366]['HourlyData'][hour 1 - 24]['FuelTotal'][any vals where val['Fuel'] == fuel]['EnergyValue']['Output'] = MWh per hour
+                hour_data = hourly['Document']['DocBody']['DailyData'][day]['HourlyData'][hour]['FuelTotal']
                 fuel_values = [values for values in hour_data if values['Fuel'] == fuel]
-                fuel_value = float(fuel_values[0]['EnergyValue']['Output'])
-                hourly_production[fuel].append(fuel_value)
+                mwh_per_hour = float(fuel_values[0]['EnergyValue']['Output'])
+                hourly_production[fuel][24*day + hour] = mwh_per_hour
+
+        # Hourly production only includes <20MW generators so adjust for monthly data which includes them
+        hourly_production[fuel] *= annual_production[fuel] / sum(hourly_production[fuel])
 
     return hourly_production
 
@@ -63,13 +83,13 @@ def get_capacity_factors():
 
     hourly_production = get_ieso_production()
 
-    wind_total_cap = get_total_capacity('WIND_ONSHORE')
-    solar_total_cap = get_total_capacity('SOLAR_PV')
-    hydro_total_cap = get_total_capacity('HYDRO')
+    wind_total_cap = get_past_capacity_mw('WIND_ONSHORE')
+    solar_total_cap = get_past_capacity_mw('SOLAR')
+    hydro_total_cap = get_past_capacity_mw('HYDRO')
 
-    wind_cf = np.array(hourly_production['WIND']) / wind_total_cap / 1000 # MWh/GW.h to PJ/PJ
-    solar_cf = np.array(hourly_production['SOLAR']) / solar_total_cap / 1000
-    hydro_cf = np.array(hourly_production['HYDRO']) / hydro_total_cap / 1000
+    wind_cf = np.array(hourly_production['WIND']) / wind_total_cap # MWh/GW.h to W/W
+    solar_cf = np.array(hourly_production['SOLAR']) / solar_total_cap
+    hydro_cf = np.array(hourly_production['HYDRO']) / hydro_total_cap
     hydro_ror_cf = np.array(pd.read_csv(ieso_data + 'hydro_ror_cf.csv',index_col=0,header=0)['0'])
     hydro_dly_cf = np.array(pd.read_csv(ieso_data + 'hydro_dly_cf_365.csv',index_col=0,header=0)['0']) * 3600 * 24 / 10**6 # GWd to PJ
 
@@ -83,7 +103,29 @@ def get_capacity_factors():
 
 
 
-def get_total_capacity(vre_type):
+# Get data year capacity of a VRE where unit capacities >20MW
+def get_past_capacity_mw(vre_type):
+
+    existing_gens = coders_api.get_json('generators', from_cache=True)
+
+    total_cap = 0
+    for gen in existing_gens:
+        if vre_type not in gen['gen_type'].upper(): continue
+        if "ONTARIO" not in gen['operating_region'].upper(): continue
+        if gen['install_capacity_in_mw'] < 20: continue # IESO ignores <20MW in hourly data -> must match for CFs
+
+        vint = gen['previous_renewal_year']
+        if vint is None: vint = gen['start_year']
+        if vint > int(data_year): continue
+        
+        total_cap += gen['install_capacity_in_mw']
+
+    return total_cap
+
+
+
+# Get total existing capacity of a VRE in the database
+def get_database_capacity_gw(vre_type):
     
     conn = sqlite3.connect(coders_db)
     curs = conn.cursor()
@@ -100,8 +142,15 @@ def write_to_coders_db():
 
     cfs = get_capacity_factors()
 
+    mean_cfs = dict()
+    for vre in ['WIND_ONSHORE','SOLAR_PV','HYDRO_RUN']:
+        mean_cfs[vre] = np.mean(cfs[vre])
+
+    print('IESO capacity factors:')
+    print(pd.DataFrame(columns=['mean cf'], index=mean_cfs.keys(), data=mean_cfs.values()))
+
     # Hydro daily storage uses a daily energy allotment (Min/MaxSeasonalActivity)
-    hydro_dly_total_cap = get_total_capacity('HYDRO_DAILY')
+    hydro_dly_total_cap = get_database_capacity_gw('HYDRO_DAILY')
     hydro_dly_seas_act = cfs['HYDRO_DAILY'] * hydro_dly_total_cap * 3600/1E6 # GWh/day to PJ
 
     conn = sqlite3.connect(coders_db)

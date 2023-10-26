@@ -18,7 +18,7 @@ reference = f"Forecasted capability at normal summer peak divided by total insta
 ieso_rel = tools.get_data(rel_outlook_url, file_type='xlsx', sheet_name='Table 4.1', skiprows=4, header=0, nrows=6, index_col=0)
 ieso_rel['capacity_credit'] = ieso_rel[f"Forecast Capability at 2024 Summer Peak [{config.params['ieso_rel_peak_type']}] (MW)"] / pd.to_numeric(ieso_rel['Total Installed Capacity\n(MW)'])
 print('IESO reliability outlook capacity credits:')
-print(ieso_rel['capacity_credit'])
+print(ieso_rel.iloc[:,-1:])
 
 # Specify which techs to assign capacity credits by fuel type
 fuel_tech_like = {
