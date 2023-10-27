@@ -54,7 +54,8 @@ evolving_cost = dict({translator['generator_types'][tech['gen_type'].upper()]['C
 """
 
 # Add default global discount rate
-curs.execute(f"REPLACE INTO GlobalDiscountRate(rate) VALUES({params['global_discount_rate']})")
+curs.execute("DELETE FROM GlobalDiscountRate")
+curs.execute(f"INSERT INTO GlobalDiscountRate(rate) VALUES({params['global_discount_rate']})")
 
 # Add future model periods
 for period in [*model_periods, 2*model_periods[-1] - model_periods[-2]]: 
