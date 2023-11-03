@@ -94,7 +94,7 @@ class DatabaseConverter:
                         "This may take some time.\n"
                         "Any data in the workbook that is not in the sqlite database will be lost. Proceed? (Y/N):")
         if overwrite.upper() != "Y":
-            print("Returning. Did not overwrite workbook.")
+            print("Did not overwrite workbook.")
             return
 
         if not os.path.isfile(to_excel_file):

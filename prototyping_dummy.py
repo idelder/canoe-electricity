@@ -11,7 +11,7 @@ from setup import config
 import ieso_capacity_factors as ieso_cf
 import coders_api
 
-if os.path.isfile('coders_schema.sqlite'): os.remove('coders_schema.sqlite')
+""" if os.path.isfile('coders_schema.sqlite'): os.remove('coders_schema.sqlite')
 
 shutil.copy('temoa_schema.sqlite', 'coders_schema.sqlite')
 
@@ -62,4 +62,4 @@ for table in all_tables:
                  ADD COLUMN additional_notes TEXT""")
 
 conn.commit()
-conn.close()
+conn.close() """

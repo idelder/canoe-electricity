@@ -629,6 +629,7 @@ for tech in interface_techs.keys():
 tx_techs = ["TX_TO_DX", "DX_TO_TX"]
 dummy_techs = ["DX_TO_DEM", "G_TO_TX", "GRPS_TO_TX"]
 for tx_tech in tx_techs + dummy_techs:
+    #technologies
     curs.execute(f"""REPLACE INTO
                 technologies(tech, flag, sector, tech_desc)
                 VALUES("{translator['generator_types'][tx_tech]['CANOE_tech']}", "p", "electric", "Transmission dummy tech")""")
@@ -662,13 +663,13 @@ for province in ca_sys_params:
                     commodities(comm_name, flag)
                     VALUES("{output_comm}", "p")""")
 
+        # Eff is line loss for TX <-> DX or 1.0 for dummy techs
         eff = 1.0 - line_loss if tx_tech in tx_techs else 1
 
-        for period in model_periods:
-            # Efficiency
-            curs.execute(f"""REPLACE INTO
-                        Efficiency(regions, input_comm, tech, vintage, output_comm, efficiency)
-                        VALUES("{region}", "{input_comm}", "{tech}", {model_periods[0]}, "{output_comm}", "{eff}")""")
+        # Efficiency
+        curs.execute(f"""REPLACE INTO
+                    Efficiency(regions, input_comm, tech, vintage, output_comm, efficiency)
+                    VALUES("{region}", "{input_comm}", "{tech}", {model_periods[0]}, "{output_comm}", {eff})""")
             
 
 
@@ -691,21 +692,10 @@ for region in all_regions:
             curs.execute(f"""REPLACE INTO
                          MaxCapacity(regions, periods, tech, maxcap, maxcap_units)
                          VALUES('{region}', {period}, '{tech}', {max_cap}, '{translator['units']['capacity']['CANOE_unit']}')""")
-
-
-
-# MUST COME LAST
-# Overwrite all regions with global values from translator database
-for region in all_regions:
-    for global_override in config.global_overrides:
-
-        if region == 'EX': continue
-        
-        curs.execute(f"""REPLACE INTO
-                     {global_override['table']}(regions, tech, {global_override['columns']})
-                     VALUES('{region}', '{global_override['CANOE_tech']}', {global_override['global_values']})""")
         
 
 
 conn.commit()
 conn.close()
+
+print(f"CODERS API data pulled into {os.path.basename(database_file)}")

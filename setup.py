@@ -32,7 +32,6 @@ class config:
 
         cls._build_translator(curs)
         cls._get_params(curs)
-        cls._get_global_overrides(curs)
 
         conn.close()
 
@@ -121,24 +120,6 @@ class config:
 
                 for c in range(len(column_names)):
                     config.translator[table][rows[r][0]][column_names[c]] = rows[r][c]
-
-
-
-    def _get_global_overrides(curs):
-
-        # Get global overrides
-        rows = curs.execute("SELECT * FROM global_overrides")
-        column_names = [column[0] for column in rows.description]
-        rows = rows.fetchall()
-
-        config.global_overrides = list()
-        for r in range(len(rows)):
-
-            global_override = dict()
-            config.global_overrides.append(global_override)
-
-            for c in range(len(column_names)):
-                global_override[column_names[c]] = rows[r][c]
 
 
 
