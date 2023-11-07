@@ -75,9 +75,6 @@ total_dsd = sum([dsd[0] for dsd in curs.execute("SELECT dds FROM DemandSpecificD
 curs.execute(f"""UPDATE DemandSpecificDistribution
              SET dds = dds / {total_dsd}""")
 
-curs.execute(f"""REPLACE INTO commodities(comm_name, flag)
-             VALUES('D_ELC', 'd')""")
-
 for day in days:
     for h in range(24):
         curs.execute(f"""REPLACE INTO SegFrac(season_name, time_of_day_name, segfrac)
