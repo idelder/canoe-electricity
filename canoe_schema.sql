@@ -202,7 +202,7 @@ CREATE TABLE IF NOT EXISTS "TechOutputSplit" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions","periods","tech","output_comm"),
 	FOREIGN KEY("output_comm") REFERENCES "commodities"("comm_name"),
 	FOREIGN KEY("periods") REFERENCES "time_periods"("t_periods"),
@@ -233,7 +233,7 @@ CREATE TABLE IF NOT EXISTS "TechInputSplit" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions","periods","input_comm","tech"),
 	FOREIGN KEY("tech") REFERENCES "technologies"("tech"),
 	FOREIGN KEY("input_comm") REFERENCES "commodities"("comm_name"),
@@ -264,7 +264,7 @@ CREATE TABLE IF NOT EXISTS "TechInputSplitAverage" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions","periods","input_comm","tech"),
 	FOREIGN KEY("input_comm") REFERENCES "commodities"("comm_name"),
 	FOREIGN KEY("tech") REFERENCES "technologies"("tech"),
@@ -293,7 +293,7 @@ CREATE TABLE IF NOT EXISTS "StorageDuration" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions","tech")
 );
 CREATE TABLE IF NOT EXISTS "SegFrac" (
@@ -319,7 +319,7 @@ CREATE TABLE IF NOT EXISTS "SegFrac" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("season_name","time_of_day_name"),
 	FOREIGN KEY("season_name") REFERENCES "time_season"("t_season"),
 	FOREIGN KEY("time_of_day_name") REFERENCES "time_of_day"("t_day")
@@ -345,7 +345,7 @@ CREATE TABLE IF NOT EXISTS "PlanningReserveMargin" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY(regions),
 	FOREIGN KEY(`regions`) REFERENCES regions
 );
@@ -371,7 +371,7 @@ CREATE TABLE IF NOT EXISTS "RampDown" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions", "tech"),
 	FOREIGN KEY("tech") REFERENCES "technologies"("tech")
 );
@@ -397,7 +397,7 @@ CREATE TABLE IF NOT EXISTS "RampUp" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions", "tech"),
 	FOREIGN KEY("tech") REFERENCES "technologies"("tech")
 );
@@ -577,7 +577,7 @@ CREATE TABLE IF NOT EXISTS "MinGenGroupWeight" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("tech","group_name","regions")
 );
 CREATE TABLE IF NOT EXISTS "MinGenGroupTarget" (
@@ -604,7 +604,7 @@ CREATE TABLE IF NOT EXISTS "MinGenGroupTarget" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("periods","group_name","regions")
 );
 CREATE TABLE IF NOT EXISTS "MinCapacity" (
@@ -632,7 +632,7 @@ CREATE TABLE IF NOT EXISTS "MinCapacity" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions","periods","tech"),
 	FOREIGN KEY("tech") REFERENCES "technologies"("tech"),
 	FOREIGN KEY("periods") REFERENCES "time_periods"("t_periods")
@@ -662,7 +662,7 @@ CREATE TABLE IF NOT EXISTS "MinActivity" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions","periods","tech"),
 	FOREIGN KEY("tech") REFERENCES "technologies"("tech"),
 	FOREIGN KEY("periods") REFERENCES "time_periods"("t_periods")
@@ -692,7 +692,7 @@ CREATE TABLE IF NOT EXISTS "MaxCapacity" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions","periods","tech"),
 	FOREIGN KEY("periods") REFERENCES "time_periods"("t_periods"),
 	FOREIGN KEY("tech") REFERENCES "technologies"("tech")
@@ -722,10 +722,74 @@ CREATE TABLE IF NOT EXISTS "MaxActivity" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions","periods","tech"),
 	FOREIGN KEY("periods") REFERENCES "time_periods"("t_periods"),
 	FOREIGN KEY("tech") REFERENCES "technologies"("tech")
+);
+CREATE TABLE IF NOT EXISTS "MinAnnualCapacityFactor" (
+	"regions"	text,
+	"periods"	integer,
+	"tech"	text,
+	"output_comm" text,
+	"min_acf"	real CHECK("min_acf" >= 0 AND "min_acf" <= 1),
+	"min_acf_notes"	text,
+
+	"reference" text,
+	"data_year" integer,
+	"data_flags" text,
+	"dq_est" integer,
+	"dq_rel" integer,
+	"dq_comp" integer,
+	"dq_time" integer,
+	"dq_geog" integer,
+	"dq_tech" integer,
+	"additional_notes" text,
+
+	FOREIGN KEY("reference") REFERENCES "references"("reference"),
+	FOREIGN KEY("dq_est") REFERENCES "dq_estimate"("data_quality_estimated"),
+	FOREIGN KEY("dq_rel") REFERENCES "dq_estimate"("data_quality_reliability"),
+	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
+	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
+	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
+
+	PRIMARY KEY("regions","periods","tech","output_comm"),
+	FOREIGN KEY("periods") REFERENCES "time_periods"("t_periods"),
+	FOREIGN KEY("tech") REFERENCES "technologies"("tech"),
+	FOREIGN KEY("output_comm") REFERENCES "commodities"("comm_name")
+);
+CREATE TABLE IF NOT EXISTS "MaxAnnualCapacityFactor" (
+	"regions"	text,
+	"periods"	integer,
+	"tech"	text,
+	"output_comm" text,
+	"max_acf"	real CHECK("max_acf" >= 0 AND "max_acf" <= 1),
+	"max_acf_notes"	text,
+
+	"reference" text,
+	"data_year" integer,
+	"data_flags" text,
+	"dq_est" integer,
+	"dq_rel" integer,
+	"dq_comp" integer,
+	"dq_time" integer,
+	"dq_geog" integer,
+	"dq_tech" integer,
+	"additional_notes" text,
+
+	FOREIGN KEY("reference") REFERENCES "references"("reference"),
+	FOREIGN KEY("dq_est") REFERENCES "dq_estimate"("data_quality_estimated"),
+	FOREIGN KEY("dq_rel") REFERENCES "dq_estimate"("data_quality_reliability"),
+	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
+	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
+	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
+
+	PRIMARY KEY("regions","periods","tech","output_comm"),
+	FOREIGN KEY("periods") REFERENCES "time_periods"("t_periods"),
+	FOREIGN KEY("tech") REFERENCES "technologies"("tech"),
+	FOREIGN KEY("output_comm") REFERENCES "commodities"("comm_name")
 );
 CREATE TABLE IF NOT EXISTS "LifetimeTech" (
 	"regions"	text,
@@ -750,7 +814,7 @@ CREATE TABLE IF NOT EXISTS "LifetimeTech" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions","tech"),
 	FOREIGN KEY("tech") REFERENCES "technologies"("tech")
 );
@@ -778,7 +842,7 @@ CREATE TABLE IF NOT EXISTS "LifetimeProcess" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions","tech","vintage"),
 	FOREIGN KEY("vintage") REFERENCES "time_periods"("t_periods"),
 	FOREIGN KEY("tech") REFERENCES "technologies"("tech")
@@ -806,7 +870,7 @@ CREATE TABLE IF NOT EXISTS "LifetimeLoanTech" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions","tech"),
 	FOREIGN KEY("tech") REFERENCES "technologies"("tech")
 );
@@ -834,7 +898,7 @@ CREATE TABLE IF NOT EXISTS "GrowthRateSeed" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions","tech"),
 	FOREIGN KEY("tech") REFERENCES "technologies"("tech")
 );
@@ -861,7 +925,7 @@ CREATE TABLE IF NOT EXISTS "GrowthRateMax" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions","tech"),
 	FOREIGN KEY("tech") REFERENCES "technologies"("tech")
 );
@@ -911,7 +975,7 @@ CREATE TABLE IF NOT EXISTS "ExistingCapacity" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions","tech","vintage"),
 	FOREIGN KEY("tech") REFERENCES "technologies"("tech"),
 	FOREIGN KEY("vintage") REFERENCES "time_periods"("t_periods")
@@ -941,7 +1005,7 @@ CREATE TABLE IF NOT EXISTS "EmissionLimit" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("periods","emis_comm"),
 	FOREIGN KEY("periods") REFERENCES "time_periods"("t_periods"),
 	FOREIGN KEY("emis_comm") REFERENCES "commodities"("comm_name")
@@ -974,7 +1038,7 @@ CREATE TABLE IF NOT EXISTS "EmissionActivity" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions","emis_comm","input_comm","tech","vintage","output_comm"),
 	FOREIGN KEY("input_comm") REFERENCES "commodities"("comm_name"),
 	FOREIGN KEY("tech") REFERENCES "technologies"("tech"),
@@ -1008,7 +1072,7 @@ CREATE TABLE IF NOT EXISTS "Efficiency" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions","input_comm","tech","vintage","output_comm"),
 	FOREIGN KEY("output_comm") REFERENCES "commodities"("comm_name"),
 	FOREIGN KEY("tech") REFERENCES "technologies"("tech"),
@@ -1039,7 +1103,7 @@ CREATE TABLE IF NOT EXISTS "DiscountRate" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions","tech","vintage"),
 	FOREIGN KEY("tech") REFERENCES "technologies"("tech"),
 	FOREIGN KEY("vintage") REFERENCES "time_periods"("t_periods")
@@ -1069,7 +1133,7 @@ CREATE TABLE IF NOT EXISTS "DemandSpecificDistribution" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions","season_name","time_of_day_name","demand_name"),
 	FOREIGN KEY("season_name") REFERENCES "time_season"("t_season"),
 	FOREIGN KEY("time_of_day_name") REFERENCES "time_of_day"("t_day"),
@@ -1100,7 +1164,7 @@ CREATE TABLE IF NOT EXISTS "Demand" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions","periods","demand_comm"),
 	FOREIGN KEY("periods") REFERENCES "time_periods"("t_periods"),
 	FOREIGN KEY("demand_comm") REFERENCES "commodities"("comm_name")
@@ -1135,7 +1199,7 @@ CREATE TABLE IF NOT EXISTS "CostVariable" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions","periods","tech","vintage"),
 	FOREIGN KEY("tech") REFERENCES "technologies"("tech"),
 	FOREIGN KEY("vintage") REFERENCES "time_periods"("t_periods"),
@@ -1170,7 +1234,7 @@ CREATE TABLE IF NOT EXISTS "CostInvest" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions","tech","vintage"),
 	FOREIGN KEY("tech") REFERENCES "technologies"("tech"),
 	FOREIGN KEY("vintage") REFERENCES "time_periods"("t_periods")
@@ -1205,7 +1269,7 @@ CREATE TABLE IF NOT EXISTS "CostFixed" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions","periods","tech","vintage"),
 	FOREIGN KEY("tech") REFERENCES "technologies"("tech"),
 	FOREIGN KEY("vintage") REFERENCES "time_periods"("t_periods"),
@@ -1234,7 +1298,7 @@ CREATE TABLE IF NOT EXISTS "CapacityToActivity" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions","tech"),
 	FOREIGN KEY("tech") REFERENCES "technologies"("tech")
 );
@@ -1263,7 +1327,7 @@ CREATE TABLE IF NOT EXISTS "CapacityFactorTech" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions","season_name","time_of_day_name","tech"),
 	FOREIGN KEY("season_name") REFERENCES "time_season"("t_season"),
 	FOREIGN KEY("time_of_day_name") REFERENCES "time_of_day"("t_day"),
@@ -1295,7 +1359,7 @@ CREATE TABLE IF NOT EXISTS "CapacityFactorProcess" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions","season_name","time_of_day_name","tech","vintage"),
 	FOREIGN KEY("tech") REFERENCES "technologies"("tech"),
 	FOREIGN KEY("season_name") REFERENCES "time_season"("t_season"),
@@ -1306,8 +1370,8 @@ CREATE TABLE IF NOT EXISTS "CapacityCredit" (
 	"periods"	integer,
 	"tech"	text,
 	"vintage" integer,
-	"cf_tech"	real CHECK("cf_tech" >= 0 AND "cf_tech" <= 1),
-	"cf_tech_notes"	text,
+	"cc_tech"	real CHECK("cc_tech" >= 0 AND "cc_tech" <= 1),
+	"cc_tech_notes"	text,
 
 	"reference" text,
 	"data_year" integer,
@@ -1326,7 +1390,7 @@ CREATE TABLE IF NOT EXISTS "CapacityCredit" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	PRIMARY KEY("regions","periods","tech","vintage")
 );
 CREATE TABLE IF NOT EXISTS "MaxResource" (
@@ -1353,7 +1417,7 @@ CREATE TABLE IF NOT EXISTS "MaxResource" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	FOREIGN KEY("tech") REFERENCES "technologies"("tech"),
 	PRIMARY KEY("regions","tech")
 );
@@ -1381,7 +1445,7 @@ CREATE TABLE IF NOT EXISTS "LinkedTechs" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	FOREIGN KEY("primary_tech") REFERENCES "technologies"("tech"),
 	FOREIGN KEY("linked_tech") REFERENCES "technologies"("tech"),
 	FOREIGN KEY("emis_comm") REFERENCES "commodities"("comm_name"),
@@ -1420,7 +1484,7 @@ CREATE TABLE IF NOT EXISTS "MaxSeasonalActivity" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	FOREIGN KEY("periods") REFERENCES "time_periods"("t_periods"),
 
 	FOREIGN KEY("season_name") REFERENCES "time_season"("t_season"),
@@ -1463,7 +1527,7 @@ CREATE TABLE IF NOT EXISTS "MinSeasonalActivity" (
 	FOREIGN KEY("dq_comp") REFERENCES "dq_estimate"("data_quality_completeness"),
 	FOREIGN KEY("dq_time") REFERENCES "dq_estimate"("data_quality_time_related"),
 	FOREIGN KEY("dq_geog") REFERENCES "dq_estimate"("data_quality_geography"),
-	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology")
+	FOREIGN KEY("dq_tech") REFERENCES "dq_estimate"("data_quality_technology"),
 	FOREIGN KEY("periods") REFERENCES "time_periods"("t_periods"),
 
 	FOREIGN KEY("tech") REFERENCES "technologies"("tech"),

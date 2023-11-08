@@ -50,6 +50,8 @@ for h in range(8760):
     curs.execute(f"""REPLACE INTO DemandSpecificDistribution(regions, season_name, time_of_day_name, demand_name, dds)
                  VALUES("ON", '{config.seas_8760[h]}', '{config.tofd_8760[h]}', 'D_ELC', {demand['demand'][h]/total_demand})""")
     
+curs.execute(f"""REPLACE INTO sector_labels(sector) VALUES('electric')""")
+    
 curs.execute(f"""UPDATE Efficiency
                 SET efficiency = 0.80
                 WHERE tech like '%PMP%'""")

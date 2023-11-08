@@ -62,7 +62,7 @@ def write_to_coders_db():
                     if vint > period or vint + life < period: continue
 
                     curs.execute(f"""REPLACE INTO
-                                CapacityCredit(regions, periods, tech, vintage, cf_tech, cf_tech_notes, reference)
+                                CapacityCredit(regions, periods, tech, vintage, cc_tech, cc_tech_notes, reference)
                                 VALUES("ON", {period}, '{tech}', {vint}, {cc}, '{note}', '{reference}')""")
                 
 
