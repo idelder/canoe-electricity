@@ -312,7 +312,7 @@ for region in all_regions:
         cost_invest = translator['units']['cost_invest']['conversion_factor'] * generic_tech['total_project_cost_2020_CAD_per_kW']
         cost_fixed = translator['units']['cost_fixed']['conversion_factor'] * generic_tech['fixed_om_cost_CAD_per_MWyear']
         cost_variable = translator['units']['cost_variable']['conversion_factor'] * generic_tech['variable_om_cost_CAD_per_MWh']
-        if include_fuel_cost: cost_variable += translator['units']['cost_fuel']['conversion_factor'] * generic_tech['average_fuel_price_CAD_per_GJ']
+        if include_fuel_cost: cost_variable += translator['units']['cost_fuel']['conversion_factor'] * generic_tech['average_fuel_price_CAD_per_GJ'] / generic_tech['efficiency']
         emis_act = translator['units']['emission_activity']['conversion_factor'] * generic_tech['carbon_emissions_tCO2eq_per_MWh']
 
 
