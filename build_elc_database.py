@@ -3,13 +3,15 @@ Builds the electricity sector database to be merged into the larger model
 Written by Ian David Elder for the CANOE model
 """
 
-import coders_pull # Runs on import... for now...
+import generators # Runs on import... for now...
 #import ieso_vre_capacity_credits as ieso_vre_cc
 #import ieso_rel_capacity_credits as ieso_rel_cc
 #import ieso_capacity_factors as ieso_cf
 import sqlite3
 import utils
+import post_processing
 import os
+import transmission
 import pandas as pd
 from setup import config
 
@@ -23,7 +25,10 @@ curs = conn.cursor() # Cursor object interacts with the sqlite db
 # Build the database if it doesn't exist
 if build_db: curs.executescript(open(config.schema_file, 'r').read())
 
-coders_pull.aggregate()
+generators.aggregate()
+transmission.aggregate_interties()
+transmission.aggregate_provincial_grids()
+post_processing.aggregate_post()
 
 #ieso_cf.write_to_coders_db()
 #ieso_vre_cc.write_to_coders_db(show_plots=False)
@@ -84,7 +89,7 @@ curs.execute(f"""UPDATE Efficiency
                 WHERE tech like '%BAT%'""")
 
 curs.execute(f"DELETE FROM time_season")
-[curs.execute(f"INSERT OR IGNORE INTO time_season(t_season) VALUES('{day}')") for day in rep_days.keys()]
+[curs.execute(f"INSERT INTO time_season(t_season) VALUES('{day}')") for day in rep_days.keys()]
 
 seas_tables = [
     'CapacityFactorTech',

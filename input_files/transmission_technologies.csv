@@ -1,7 +1,7 @@
 ﻿code,tech,input_comm,output_comm
-TX_TO_DX,E_ELC_TX_to_DX,E_ELC_TX,E_ELC_DX
-DX_TO_TX,E_ELC_DX_to_TX,E_ELC_DX,E_ELC_TX
-INTERTIE,E_INT,E_ELC_TX,E_ethos_EX
-DX_TO_DEM,E_ELC_DX_to_DEM,E_ELC_DX,D_ELC
-G_TO_TX,E_ELCG_to_TX,E_ELCG,E_ELC_TX
-GRPS_TO_TX,E_ELCG_RPS_to_TX,E_ELCG_RPS,E_ELC_TX
+TX_TO_DX,E_ELC_TX_to_DX,elc_tx,elc_dx
+DX_TO_TX,E_ELC_DX_to_TX,elc_dx,elc_tx
+INTERTIE,E_INT,elc_tx,ethos_ex
+DX_TO_DEM,E_ELC_DX_to_DEM,elc_dx,demand
+G_TO_TX,E_ELCG_to_TX,elcg,elc_tx
+GRPS_TO_TX,E_ELCG_RPS_to_TX,elcg_rps,elc_tx

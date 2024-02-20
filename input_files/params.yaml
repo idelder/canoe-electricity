@@ -30,7 +30,7 @@ new_cap:
   step_size_mw: 1000
 
 # Some one-off variables
-emissions_commodity: 'CO2eq'
+emissions_commodity_code: 'co2e'
 c2a_unit: "PJ/GWy"
 c2a: 31.536
 

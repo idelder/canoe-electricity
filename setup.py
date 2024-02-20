@@ -44,10 +44,10 @@ class config:
         config.commodities = pd.read_csv(config.input_files + 'commodities.csv', index_col=0)
         config.regions = pd.read_csv(config.input_files + 'regions.csv', index_col=0)
         config.trans_regions = pd.read_csv(config.input_files + 'transfer_regions.csv', index_col=0)
-        config.trans_techs = pd.read_csv(config.input_files + 'transmission_technologies.csv', index_col=0)
-        config.technologies = pd.read_csv(config.input_files + 'technologies.csv', index_col=0)
         config.time = pd.read_csv(config.input_files + 'time.csv', index_col=0)
         config.units = pd.read_csv(config.input_files + 'units.csv', index_col=0)
+        config.trans_techs = pd.read_csv(config.input_files + 'transmission_technologies.csv', index_col=0)
+        config.technologies = pd.read_csv(config.input_files + 'technologies.csv', index_col=0)
 
         config.model_periods = list(config.params['model_periods'])
         config.model_regions = set(config.regions.loc[(config.regions['include']) & (config.regions.index != 'EX')].index)
