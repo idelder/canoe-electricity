@@ -15,26 +15,38 @@ import transmission
 import pandas as pd
 from setup import config
 
-# Check if database exists or needs to be built
-build_db = not os.path.exists(config.database_file)
 
-# Connect to the new database file
-conn = sqlite3.connect(config.database_file)
-curs = conn.cursor() # Cursor object interacts with the sqlite db
 
-# Build the database if it doesn't exist
-if build_db: curs.executescript(open(config.schema_file, 'r').read())
+def build_database():
 
-generators.aggregate()
-transmission.aggregate_interties()
-transmission.aggregate_provincial_grids()
-post_processing.aggregate_post()
+    # Check if database exists or needs to be built
+    build_db = not os.path.exists(config.database_file)
 
-#ieso_cf.write_to_coders_db()
-#ieso_vre_cc.write_to_coders_db(show_plots=False)
-#ieso_rel_cc.write_to_coders_db()
+    # Connect to the new database file
+    conn = sqlite3.connect(config.database_file)
+    curs = conn.cursor() # Cursor object interacts with the sqlite db
 
-if config.params['clone_to_excel']: utils.DatabaseConverter().clone_sqlite_to_excel(config.database_file, config.excel_target_file, config.excel_template_file)
+    # Build the database if it doesn't exist
+    if build_db: curs.executescript(open(config.schema_file, 'r').read())
+
+    generators.aggregate()
+    transmission.aggregate_interties()
+    transmission.aggregate_provincial_grids()
+    post_processing.aggregate_post()
+
+    #ieso_cf.write_to_coders_db()
+    #ieso_vre_cc.write_to_coders_db(show_plots=False)
+    #ieso_rel_cc.write_to_coders_db()
+
+    if config.params['clone_to_excel']: utils.DatabaseConverter().clone_sqlite_to_excel(config.database_file, config.excel_target_file, config.excel_template_file)
+
+
+
+if __name__ == "__main__":
+    
+    build_database()
+
+
 
 """
 ##############################################################

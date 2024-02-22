@@ -6,9 +6,8 @@ Written by Ian David Elder for the CANOE model
 import os
 import pandas as pd
 import yaml
-import requests
-import urllib.request
-import zipfile
+
+
 
 class config:
 
