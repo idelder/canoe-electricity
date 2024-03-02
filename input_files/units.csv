@@ -12,3 +12,4 @@ ramp_rate,cap_frac/min,cap_frac/min,cap_frac/hour,60,60
 activity,MWh,MWh,PJ,3.60E-06,3.60E-06
 heat_rate,,MMBtu_MWh,%,,0.29307107
 intertie_capacity,MWh/h,,GW,0.001,
+demand,GWh/y,,PJ/y,3.60E-03,

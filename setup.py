@@ -26,6 +26,7 @@ def instantiate_database():
     elif config.params['force_wipe_database']:
         tables = [t[0] for t in curs.execute("""SELECT name FROM sqlite_master WHERE type='table';""").fetchall()]
         for table in tables: curs.execute(f"DELETE FROM '{table}'")
+        print("Database wiped prior to aggregation. See params.\n")
     
     conn.commit()
     conn.close()
@@ -53,7 +54,7 @@ class config:
         cls._get_files(cls._instance)
         cls._download_atb_master(cls._instance)
 
-        print('Instantiated setup config.')
+        print('Instantiated setup config.\n')
 
         return cls._instance
 
@@ -66,14 +67,17 @@ class config:
 
         config.commodities = pd.read_csv(config.input_files + 'commodities.csv', index_col=0)
         config.regions = pd.read_csv(config.input_files + 'regions.csv', index_col=0)
-        config.interties = pd.read_csv(config.input_files + 'interties.csv')
         config.time = pd.read_csv(config.input_files + 'time.csv', index_col=0)
         config.units = pd.read_csv(config.input_files + 'units.csv', index_col=0)
         config.trans_techs = pd.read_csv(config.input_files + 'transmission_technologies.csv', index_col=0)
         config.gen_techs = pd.read_csv(config.input_files + 'generator_technologies.csv', index_col=0)
         config.storage_techs = pd.read_csv(config.input_files + 'storage_technologies.csv', index_col=0)
         config.import_techs = pd.read_csv(config.input_files + 'import_technologies.csv', index_col=0)
+        config.ccs_techs = pd.read_csv(config.input_files + 'ccs_retrofit_technologies.csv', index_col=0)
         config.atb_master_tables = pd.read_csv(config.input_files + 'atb_master_tables.csv', index_col=0)
+
+        # Only want the included retrofit techs
+        config.ccs_techs = config.ccs_techs.loc[config.ccs_techs['include']]
 
         # Fill in missing columns versus gen_techs
         config.storage_techs['tech_sets'] = pd.NA # what sets would you add them to?
@@ -81,20 +85,21 @@ class config:
 
         # Included regions and future periods
         config.model_periods = list(config.params['model_periods'])
-        config.model_regions = set(config.regions.loc[(config.regions['endogenous'])].index)
+        config.model_periods.sort()
+        config.regions['endogenous'].fillna(False, inplace=True)
+        config.model_regions = config.regions.loc[(config.regions['endogenous'])].index.unique().to_list()
+        config.model_regions.sort()
 
         # Maps all coders gen types to canoe techs
         config.gen_map = dict()
         for tech_code, row in config.gen_techs.iterrows():
-            for coders_equiv in row['coders_existing'].split("+"):
-                config.gen_map[coders_equiv] = tech_code
+            config.gen_map[row['coders_equiv']] = tech_code
 
-        # Maps all coders gen types to canoe techs
+        # Maps all coders storage types to canoe techs
         config.storage_map = dict()
         for tech_code, row in config.storage_techs.iterrows():
-            for coders_equiv in row['coders_existing'].split("+"):
-                key = (coders_equiv, row['duration'])
-                config.storage_map[key] = tech_code
+            key = (row['coders_equiv'], row['duration'])
+            config.storage_map[key] = tech_code
 
         # Maps all types of coders regions to canoe regions
         config.region_map = dict()
@@ -102,12 +107,6 @@ class config:
             for coders_equiv in row['coders_equivs'].split("+"):
                 if row['endogenous']: config.region_map[coders_equiv] = region
                 else: config.region_map[coders_equiv] = 'X'
-
-        # Get CANOE regions for interties, sort regions so they're direction agnostic and remove any interties outside the model
-        config.interties[['region_1','region_2']] = [np.sort([config.region_map[ft[0].lower()], config.region_map[ft[1].lower()]])
-                                                     for ft in config.interties[['coders_from','coders_to']].values]
-        config.interties.loc[(config.interties['region_1'].isin(config.model_regions)) | (config.interties['region_2'].isin(config.model_regions))]
-        config.interties = config.interties.set_index(['region_1','region_2']).sort_index()
 
         # Batched new capacities and new capacity limits
         config.batched_cap = dict()
@@ -130,7 +129,6 @@ class config:
     def _download_atb_master(cls):
 
         config.atb_master_file = config.cache_dir + config.params['atb']['master_url'].split('/')[-1]
-        config.references['atb_master'] = config.params['atb']['master_reference']
 
         if not os.path.isfile(config.atb_master_file):
             print("Downloading ATB master workbook...")

@@ -71,6 +71,44 @@ def compr_db_url(region, table_number):
 
 
 
+df_atb: pd.DataFrame = None
+def _initialise_atb():
+
+    global df_atb
+
+    # ATB data. CRP years is arbitrary unless using LCOE
+    df_atb = get_data(config.params['atb']['url'], dtype='unicode', index_col=0)
+    df_atb = df_atb.loc[(df_atb['core_metric_case']==config.params['atb']['core_metric_case']) & (df_atb['crpyears'].astype(int)==20)]
+    config.references['atb'] = config.params['atb']['reference']
+
+
+
+# Just a shorthand way to get ATB data
+atb_tables = dict() # local store of reduced ATB tables by tech - saves lots of time
+def atb_data(tech_config: pd.Series, **kwargs) -> tuple[pd.DataFrame, str]:
+
+    global df_atb
+
+    if df_atb is None: _initialise_atb()
+
+    note = f"{tech_config['atb_display_name']} - {tech_config['atb_scenario']} - {config.params['atb']['core_metric_case']}"
+    
+    # Take stored reduced table if exists otherwise reduce whole atb table
+    if tech_config.name in atb_tables.keys(): df = atb_tables[tech_config.name]
+    else: 
+        df = df_atb.loc[(df_atb['display_name']==tech_config['atb_display_name']) & (df_atb['scenario']==tech_config['atb_scenario'])]
+        atb_tables[tech_config.name] = df
+
+    for key, value in kwargs.items():
+        df: pd.DataFrame | pd.Series = df.loc[df[key] == str(value)]
+        note += f" - {value}"
+
+    if len(df.index) == 1: return df['value'], note
+    elif len(df.index) > 1: return df, note
+    else: return None, note
+
+
+
 def get_statcan_table(table, save_as=None, **kwargs):
 
     if save_as == None: save_as = f"statcan_{table}.csv"
@@ -225,7 +263,7 @@ class DatabaseConverter:
 
         return cls._instance
 
-    def clone_sqlite_to_excel(self, from_sqlite_file: str, to_excel_file: str, excel_template_file: str = None):
+    def clone_sqlite_to_excel(self, from_sqlite_file: str = config.database_file, to_excel_file: str = config.excel_target_file, excel_template_file: str = config.excel_template_file):
         
         print(f"\nCloning {os.path.basename(from_sqlite_file)} into target {os.path.basename(to_excel_file)}."\
               "\nThis may take a minute...")

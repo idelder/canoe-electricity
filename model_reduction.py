@@ -15,27 +15,34 @@ def simplify_model():
     conn = sqlite3.connect(config.database_file)
     curs = conn.cursor() # Cursor object interacts with the sqlite db
 
+    # Maps all coders existing storage types to canoe techs
+    existing_map = dict()
+    for tech_code, row in config.gen_techs.iterrows():
+        if pd.isna(row['coders_existing']): continue
+        for coders_equiv in row['coders_existing'].split("+"):
+            existing_map[coders_equiv] = tech_code
+
+    ## Get annual capacity factors for each type of generator for each region
+    # Existing generators indexed by tech
+    _existing_json, df_existing, date_accessed = coders_api.get_data(end_point='generators')
+    df_existing['tech'] = df_existing['gen_type'].str.lower().map(existing_map)
+    df_existing['region'] = df_existing['operating_region'].str.lower().map(config.region_map)
+    df_existing.set_index('tech', inplace=True)
+
     for region in config.model_regions:
 
-        ## Get annual capacity factors for each type of generator for each region
-        # Existing generators indexed by tech
-        _existing_json, df_existing, date_accessed = coders_api.get_data(end_point='generators')
-        df_existing['tech'] = df_existing['gen_type'].str.upper().map(config.tech_map)
-
-        # Existing generators by tech for this region
-        df_existing['region'] = df_existing['operating_region'].str.upper().map(config.region_map)
-        df_existing.loc[df_existing['region'] == region]
-        df_existing.set_index('tech', inplace=True)
+        df_exs = df_existing.loc[df_existing['region'] == region]
 
         # Annual capacity factors of existing technologies in this region averaged over existing capacities
-        df_acf = (df_existing['capacity_factor_in_%'] * df_existing['effective_capacity_in_mw']).groupby('tech').sum()
-        df_cap = df_existing.groupby('tech')['effective_capacity_in_mw'].sum()
-        df_acf = df_acf.divide(df_cap)
-        df_acf.loc['E_BAT'] = 2/24 # one 2-hour storage cycle per day (NREL ATB)
-        df_acf.loc['E_HYD_PMP'] = 6/24 # one 6-hour storage cycle per day
-        df_acf.loc['E_NG_CCS'] = df_acf.loc['E_NG_CC']
-        df_acf.loc['E_NUC_SMR'] = df_acf.loc['E_NUC']
-        df_acf.loc['E_WND_OFF'] = df_acf.loc['E_WND_ON']
+        df_acf = (df_exs['capacity_factor_in_%'] * df_exs['install_capacity_in_mw']).groupby('tech').sum()
+        df_cap = df_exs.groupby('tech')['install_capacity_in_mw'].sum()
+        df_acf = df_acf.divide(df_cap.loc[df_cap>0])
+
+        # Some manual additions
+        if 'ng_ccs' not in df_acf.index and 'ng_cc' in df_acf.index: df_acf.loc['ng_ccs'] = df_acf.loc['ng_cc']
+        df_acf.loc['nuclear_smr'] = 0.86 # from CODERS
+
+        df_acf.index = [config.gen_techs.loc[tech_code, 'base_tech'] for tech_code in df_acf.index]
 
         tv_pairs = curs.execute(f"SELECT tech, vintage FROM Efficiency WHERE regions == '{region}'").fetchall()
 
@@ -82,6 +89,7 @@ def simplify_model():
 
     # Only one time slice per year: S01, D01
     curs.execute(f"DELETE FROM time_periods WHERE flag == 'e'")
+    curs.execute(f"INSERT OR IGNORE INTO time_periods(t_periods, flag) VALUES({config.model_periods[0]-1}, 'e')") # Needs one existing period apparently
     curs.execute(f"DELETE FROM time_season")
     curs.execute(f"DELETE FROM time_of_day")
     curs.execute(f"DELETE FROM SegFrac")
@@ -92,9 +100,9 @@ def simplify_model():
     # Remove unused commodities
     curs.execute(f"DELETE FROM commodities WHERE comm_name == 'CO2eq'")
     curs.execute(f"DELETE FROM commodities WHERE comm_name like '%ELC%'")
-    curs.execute(f"INSERT INTO commodities(comm_name, flag, comm_desc) VALUES('ELC', 'p', 'electricity')")
-    curs.execute(f"UPDATE Efficiency SET input_comm == 'ELC' WHERE input_comm LIKE '%ELC%'")
-    curs.execute(f"UPDATE Efficiency SET output_comm == 'ELC' WHERE output_comm LIKE '%ELC%'")
+    curs.execute(f"INSERT INTO commodities(comm_name, flag, comm_desc) VALUES('elc', 'p', 'electricity')")
+    curs.execute(f"UPDATE Efficiency SET input_comm == 'elc' WHERE input_comm LIKE '%ELC%'")
+    curs.execute(f"UPDATE Efficiency SET output_comm == 'elc' WHERE output_comm LIKE '%ELC%'")
 
     # Clear unnecessary data
     curs.execute(f"DELETE FROM tech_curtailment")
@@ -122,8 +130,8 @@ def simplify_model():
         # Remove existing capacity
         curs.execute(f"DELETE FROM {table} WHERE tech like '%-EXS'")
         
+        # Change -NEW techs to base techs
         for tech in techs:
-            print(f"UPDATE {table} SET tech = '{tech.split('-NEW')[0]}' WHERE tech == '{tech}'")
             curs.execute(f"UPDATE {table} SET tech = '{tech.split('-NEW')[0]}' WHERE tech == '{tech}'")
         
         curs.execute(f"DELETE FROM {table} WHERE tech like '%-NEW%'")

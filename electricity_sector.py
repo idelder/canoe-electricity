@@ -3,7 +3,6 @@ Builds the electricity sector database to be merged into the larger model
 Written by Ian David Elder for the CANOE model
 """
 
-import generators # Runs on import... for now...
 #import ieso_vre_capacity_credits as ieso_vre_cc
 #import ieso_rel_capacity_credits as ieso_rel_cc
 #import ieso_capacity_factors as ieso_cf
@@ -13,9 +12,10 @@ import pre_processing
 import post_processing
 import os
 import model_reduction
-import interties
+import interfaces
 import pandas as pd
 import setup
+import currency_conversion
 import generators
 import provincial_grids
 from setup import config
@@ -25,24 +25,29 @@ from matplotlib import pyplot as pp
 
 def build_database():
 
+    print(f"Aggregating electricity sector into {os.path.basename(config.database_file)}...\n")
+
     setup.instantiate_database()
 
     pre_processing.process()
 
-    #generators.aggregate()
-    #provincial_grids.aggregate_reserve_margin()
-    #provincial_grids.aggregate_transmission()
+    generators.aggregate()
+    interfaces.aggregate()
+    provincial_grids.aggregate()
 
-    if config.params['include_interties']: interties.aggregate_interties()
+    currency_conversion.convert_currencies()
+    if config.params['simplify_model']: model_reduction.simplify_model()
     
-    #post_processing.process()
+    post_processing.process()
 
     #ieso_cf.write_to_coders_db()
     #ieso_vre_cc.write_to_coders_db(show_plots=False)
     #ieso_rel_cc.write_to_coders_db()
     
-    if config.params['simplify_model']: model_reduction.simplify_model()
-    if config.params['clone_to_excel']: utils.DatabaseConverter().clone_sqlite_to_excel(config.database_file, config.excel_target_file, config.excel_template_file)
+    if config.params['clone_to_excel']: utils.DatabaseConverter().clone_sqlite_to_excel()
+
+    print(f"Electricity sector aggregated into {os.path.basename(config.database_file)}\n")
+    
     if config.params['show_plots']: pp.show()
 
 

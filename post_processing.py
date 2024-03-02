@@ -12,7 +12,7 @@ import pandas as pd
 def process():
 
     if config.params['include_imports']: aggregate_imports()
-
+    if config.params['include_capacity_limits']: aggregate_capacity_limits()
 
     conn = sqlite3.connect(config.database_file)
     curs = conn.cursor()
@@ -20,7 +20,7 @@ def process():
 
     """
     ##############################################################
-        Add any used technologies and commodities
+        Add any used commodities
     ##############################################################
     """
 
@@ -44,15 +44,35 @@ def process():
 
     """
     ##############################################################
+        References
+    ##############################################################
+    """
+
+    for ref in config.references.values():
+        curs.execute(f"""REPLACE INTO
+                    'references'('reference')
+                    VALUES('{ref}')""")
+
+
+    conn.commit()
+    conn.close()
+
+
+
+def aggregate_capacity_limits():
+
+    conn = sqlite3.connect(config.database_file)
+    curs = conn.cursor()
+
+    """
+    ##############################################################
         Some final input file constraints
     ##############################################################
     """
 
-    # TODO could probably generalise this step to all constraint tables
     # MaxCapacity
     for region in config.model_regions:
         for period in config.model_periods:
-
             for tech in config.cap_limits[region].index:
 
                 max_cap = float(config.cap_limits[region].loc[tech, period]) * config.units.loc['capacity', 'conversion_factor']
@@ -71,21 +91,7 @@ def process():
                                 MaxCapacity(regions, periods, tech, maxcap, maxcap_units, maxcap_notes, reference)
                                 VALUES('{region}', {period}, '{tech}', {max_cap}, '{config.units.loc['capacity', 'units']}',
                                 "{note}", "{reference}")""")
-
-
-
-    """
-    ##############################################################
-        References
-    ##############################################################
-    """
-
-    for ref in config.references.values():
-        curs.execute(f"""REPLACE INTO
-                    'references'('reference')
-                    VALUES('{ref}')""")
-
-
+                    
     conn.commit()
     conn.close()
 
@@ -122,3 +128,9 @@ def aggregate_imports():
             
     conn.commit()
     conn.close()
+
+
+
+if __name__ == "__main__":
+
+    process()
