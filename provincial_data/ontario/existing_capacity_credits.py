@@ -26,7 +26,7 @@ def aggregate_ccs(df_rtv: pd.DataFrame):
             curs.execute(f"""REPLACE INTO
                         CapacityCredit(regions, periods, tech, vintage, cc_tech, cc_tech_notes,
                         reference, data_year, dq_rel, dq_comp, dq_time, dq_geog, dq_tech)
-                        VALUES('{rtv['region']}', {period}, '{rtv['tech']}', {rtv['vint']}, {float(df_cc.loc[rtv['tech_code']])}, '{note}',
+                        VALUES('{rtv['region']}', {period}, '{rtv['tech']}', {rtv['vint']}, {float(df_cc.loc[rtv['tech_code']].iloc[0])}, '{note}',
                         '{reference}', {year}, 1, 1, {utils.dq_time(year, period)}, 1, 1)""")
             
     conn.commit()

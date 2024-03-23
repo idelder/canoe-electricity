@@ -174,7 +174,7 @@ def aggregate_demand():
             print(f"Insufficient hourly demand data available for {region} so DemandSpecificDistribution was skipped.")
             continue
 
-        hourly_dem = df_hourly['demand_MWh'].iloc[0:8760].fillna(method='backfill').to_numpy()
+        hourly_dem = df_hourly['demand_MWh'].iloc[0:8760].ffill().to_numpy()
         
         # Apply tolerance and normalise
         hourly_dem[hourly_dem < hourly_dem.mean() * config.params['dsd_tolerance']] = 0

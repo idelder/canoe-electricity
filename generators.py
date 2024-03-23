@@ -284,7 +284,7 @@ def aggregate_existing_storage():
     # Remove any that have not been set as an equivalent in the config csv
     for idx, row in df_existing.iterrows():
         if pd.isna(row['tech_code']):
-            print(f"Existing storage technology {row['storage_type']} has no equivalent defined in config tables and will be skipped!")
+            print(f"Existing storage technology {row['storage_type']} {row['storage_duration']}-hour has no equivalent defined in config tables and will be skipped!")
     df_existing = df_existing.loc[~pd.isna(df_existing['tech_code'])]
 
     # Get CANOE regions and skip capacity in exogenous provinces
@@ -515,7 +515,7 @@ def aggregate_rt_atb(region, tech, tech_config):
 
             metric = config.params['atb']['cost_invest_metric']
             cost_invest, note = utils.atb_data(tech_config, core_metric_parameter=metric, core_metric_variable=vint)
-            cost_invest = config.units.loc['cost_invest', 'atb_conv_fact'] * float(cost_invest)
+            cost_invest = config.units.loc['cost_invest', 'atb_conv_fact'] * float(cost_invest.iloc[0])
             
             if cost_invest != 0:
                 curs.execute(f"""REPLACE INTO
@@ -564,7 +564,7 @@ def aggregate_rtv_atb(region, tech, vint, tech_config):
     elif eff is not None: 
 
         # Heat rate to % efficiency
-        eff = 1 / (config.units.loc['heat_rate', 'atb_conv_fact'] * float(eff))
+        eff = 1 / (config.units.loc['heat_rate', 'atb_conv_fact'] * float(eff.iloc[0]))
         
         curs.execute(f"""REPLACE INTO
                 Efficiency(regions, input_comm, tech, vintage, output_comm, efficiency, eff_notes, reference, dq_est)
@@ -600,7 +600,7 @@ def aggregate_rtv_atb(region, tech, vint, tech_config):
         
         ## CostFixed
         cost_fixed, note = utils.atb_data(tech_config, core_metric_parameter='Fixed O&M', core_metric_variable=period)
-        cost_fixed = config.units.loc['cost_fixed', 'atb_conv_fact'] * float(cost_fixed)
+        cost_fixed = config.units.loc['cost_fixed', 'atb_conv_fact'] * float(cost_fixed.iloc[0])
 
         if cost_fixed != 0:
             curs.execute(f"""REPLACE INTO
@@ -620,10 +620,10 @@ def aggregate_rtv_atb(region, tech, vint, tech_config):
         # Otherwise take Variable O&M from the ATB if it has it
         elif cost_variable is not None:
 
-            cost_variable = config.units.loc['cost_variable', 'atb_conv_fact'] * float(cost_variable)
+            cost_variable = config.units.loc['cost_variable', 'atb_conv_fact'] * float(cost_variable.iloc[0])
             
             if config.params['include_tech_fuel_cost'] and tech_config['include_fuel_cost']:
-                cost_variable += config.units.loc['cost_fuel', 'atb_conv_fact'] * float(cost_fuel)
+                cost_variable += config.units.loc['cost_fuel', 'atb_conv_fact'] * float(cost_fuel.iloc[0])
                 note = f"variable o&m plus fuel cost - {var_note} - {fuel_note}"
             else: note = var_note
 
@@ -886,7 +886,7 @@ def aggregate_ccs_retrofits():
                     penalty, note = utils.atb_data(ccs_config, core_metric_parameter='Net Output Penalty', core_metric_variable=vint)
 
                     # Efficiency penalty to efficiency
-                    eff = 1 + float(penalty)
+                    eff = 1 + float(penalty.iloc[0])
                     eff_units = f"({output_comm['units']}/{output_comm['units']})"
 
                     curs.execute(f"""REPLACE INTO
@@ -908,7 +908,7 @@ def aggregate_ccs_retrofits():
                     ## CostInvest
                     metric = config.params['atb']['ccs_retrofit_cost_invest_metric']
                     cost_invest, note = utils.atb_data(ccs_config, core_metric_parameter=metric, core_metric_variable=vint)
-                    cost_invest = config.units.loc['cost_invest', 'atb_conv_fact'] * float(cost_invest)
+                    cost_invest = config.units.loc['cost_invest', 'atb_conv_fact'] * float(cost_invest.iloc[0])
 
                     if cost_invest != 0:
                         curs.execute(f"""REPLACE INTO
@@ -924,7 +924,7 @@ def aggregate_ccs_retrofits():
 
                         ## CostFixed
                         cost_fixed, note = utils.atb_data(ccs_config, core_metric_parameter='Fixed O&M', core_metric_variable=period)
-                        cost_fixed = config.units.loc['cost_fixed', 'atb_conv_fact'] * float(cost_fixed)
+                        cost_fixed = config.units.loc['cost_fixed', 'atb_conv_fact'] * float(cost_fixed.iloc[0])
 
                         if cost_fixed != 0:
                             curs.execute(f"""REPLACE INTO
@@ -935,7 +935,7 @@ def aggregate_ccs_retrofits():
 
                         ## CostVariable
                         cost_variable, note = utils.atb_data(ccs_config, core_metric_parameter='Variable O&M', core_metric_variable=period)
-                        cost_variable = config.units.loc['cost_variable', 'atb_conv_fact'] * float(cost_variable)
+                        cost_variable = config.units.loc['cost_variable', 'atb_conv_fact'] * float(cost_variable.iloc[0])
 
                         if cost_variable != 0:
                             curs.execute(f"""REPLACE INTO

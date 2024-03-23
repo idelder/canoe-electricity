@@ -350,7 +350,7 @@ def get_transfered_mwh(region_1, region_2, intertie_type) -> tuple[np.ndarray, n
     config.references[f"{config.region_map[region_1.lower()]}-{config.region_map[region_2.lower()]}"] = reference
     config.references[f"{config.region_map[region_2.lower()]}-{config.region_map[region_1.lower()]}"] = reference
   
-    hourly_mwh = df_transfers['transfers_MWh'].iloc[0:8760].fillna(method='backfill').to_numpy()
+    hourly_mwh = df_transfers['transfers_MWh'].iloc[0:8760].ffill().to_numpy()
 
     # TODO transfer flows were reversed in CODERS update. Check they haven't been reversed back again.
     # Forward is negative flows (apparently)
