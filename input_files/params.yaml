@@ -36,7 +36,7 @@ sqlite_database: "electricity.sqlite"
 excel_template: "Template spreadsheet (make a copy).xlsx"
 excel_output: "electricity.xlsx"
 
-## Bunch of aggregation options
+## Aggregation switches
 force_download: false # Forces downloading data again instead of using cached versions
 force_wipe_database: true # Wipes all data from the database prior to aggregation
 include_boundary_interfaces: true # These are to/from regions outside the model. Structured as a demand out and a VRE in
