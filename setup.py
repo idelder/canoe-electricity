@@ -27,10 +27,13 @@ def instantiate_database():
         tables = [t[0] for t in curs.execute("""SELECT name FROM sqlite_master WHERE type='table';""").fetchall()]
         for table in tables: curs.execute(f"DELETE FROM '{table}'")
         print("Database wiped prior to aggregation. See params.\n")
-    
+
     conn.commit()
+
+    # VACUUM operation to clean up any empty rows
     curs.execute("VACUUM;")
     conn.commit()
+
     conn.close()
 
 

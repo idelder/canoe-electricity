@@ -9,6 +9,7 @@ period_step: 5
 
 # Must be in ascending order along with all data in tables!
 model_periods:
+  - 2021 # calibration year
   - 2025
   - 2030
   - 2035

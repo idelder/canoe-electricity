@@ -202,8 +202,8 @@ def aggregate_existing_generators():
     step = config.params['period_step']
     df_existing['vint'] = [min(config.model_periods[0] - step, step * round(vint/step)) for vint in df_existing['vint']]
 
-    # If no retirement then override vintage to last before first model period
-    df_existing['vint'] = df_existing['vint'].mask([config.gen_techs.loc[tc, 'no_retirement'] for tc in df_existing['tech_code']], config.model_periods[0] - step)
+    # If no retirement then override vintage to one year before first model period
+    df_existing['vint'] = df_existing['vint'].mask([config.gen_techs.loc[tc, 'no_retirement'] for tc in df_existing['tech_code']], config.model_periods[0] - 1)
     
     # Aggregate existing capacities and projects by region, tech, vintage
     df_rtv = df_existing.groupby(['region','tech_code','vint']).sum(numeric_only=False).reset_index()
@@ -309,7 +309,7 @@ def aggregate_existing_storage():
     df_existing['vint'] = [min(config.model_periods[0] - step, step * round(vint/step)) for vint in df_existing['vint']]
 
     # If no retirement then override vintage to last before first model period
-    df_existing['vint'] = df_existing['vint'].mask([config.storage_techs.loc[tc, 'no_retirement'] for tc in df_existing['tech_code']], config.model_periods[0] - step)
+    df_existing['vint'] = df_existing['vint'].mask([config.storage_techs.loc[tc, 'no_retirement'] for tc in df_existing['tech_code']], config.model_periods[0] - 1)
     
     # Aggregate existing capacities and projects by region, tech, vintage
     df_rtdv = df_existing.groupby(['region','tech_code','storage_duration','vint']).sum(numeric_only=False).reset_index()

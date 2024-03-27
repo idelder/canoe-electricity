@@ -17,7 +17,7 @@ It will download a large number of files on the first run (as of now, 141 MB) bu
 		i. Set current directory to electricity_sector
 			> cd C:/.../electricity_sector/
 		ii. Create the environment
-			> conda env create environment.yml
+			> conda env create
 2. Add your CODERS API key
 	a. Acquire a CODERS API key at https://cme-emh.ca/en/coders/
 	b. Create a new text file in input_files/ called coders_api_key.txt and save your API key there.

@@ -16,7 +16,7 @@ conn: sqlite3.Connection
 curs: sqlite3.Cursor
 
 # Vintage is always last existing period as interties do not retire
-vint = config.model_periods[0] - config.params['period_step']
+vint = config.model_periods[0] - 1
 weather_year = config.params['weather_year']
 
 # Provincial parameters for line loss
