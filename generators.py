@@ -216,8 +216,8 @@ def aggregate_existing_generators() -> pd.DataFrame:
     df_existing = df_existing.loc[df_existing['region'].isin(config.model_regions)]
 
     # Remove zero-capacity projects
-    df_existing = df_existing.loc[df_existing['facility_installed_capacity'].astype(float) > 0]
-    df_existing['capacity'] = df_existing['facility_installed_capacity'].astype(float) * float(config.units.loc['capacity', 'coders_conv_fact'])
+    df_existing = df_existing.loc[df_existing['unit_installed_capacity'].astype(float) > 0]
+    df_existing['capacity'] = df_existing['unit_installed_capacity'].astype(float) * float(config.units.loc['capacity', 'coders_conv_fact'])
 
     if len(df_existing) == 0:
         print("No valid existing generation capacity found.")
@@ -343,6 +343,9 @@ def aggregate_existing_storage():
     if len(df_existing) == 0:
         print("No valid existing storage capacity found.")
         return
+    
+    # Existing capacity converted 
+    df_existing['capacity'] = df_existing['storage_capacity'].astype(float) * float(config.units.loc['capacity', 'coders_conv_fact'])
 
     # Delimiter for concatenating project names together for a description
     df_existing['description'] = df_existing['storage_facility_name'] + ' - '
@@ -407,7 +410,7 @@ def aggregate_existing_storage():
 
         curs.execute(f"""REPLACE INTO
                     ExistingCapacity(regions, tech, vintage, exist_cap, exist_cap_units, exist_cap_notes, reference, data_flags, dq_est)
-                    VALUES("{row['region']}", "{row['tech']}", "{row['vint']}", "{row['storage_capacity']}", "({config.units.loc['capacity', 'units']})",
+                    VALUES("{row['region']}", "{row['tech']}", "{row['vint']}", "{row['capacity']}", "({config.units.loc['capacity', 'units']})",
                     "{note}", "{config.references['storage']}", "coders", 1)""")
 
 

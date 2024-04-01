@@ -126,10 +126,10 @@ def get_average_annual_cf(gen_code: str) -> int:
     df_exs = df_existing.loc[(df_existing['gen_type'].str.lower().isin(coders_equivs))]
 
     # IESO data only includes generators > 20MW
-    df_exs = df_exs.loc[(df_exs['start_year'].astype(int) <= weather_year) & (df_exs['facility_installed_capacity'].astype(float) >= 20)]
+    df_exs = df_exs.loc[(df_exs['start_year'].astype(int) <= weather_year) & (df_exs['unit_installed_capacity'].astype(float) >= 20)]
 
     # Get average annual capacity factor of this type of generator
-    weighted_cf = df_exs['capacity_factor'].astype(float) * df_exs['facility_installed_capacity'].astype(float)
-    cf_ann = weighted_cf.sum() / df_exs['facility_installed_capacity'].astype(float).sum()
+    weighted_cf = df_exs['capacity_factor'].astype(float) * df_exs['unit_installed_capacity'].astype(float)
+    cf_ann = weighted_cf.sum() / df_exs['unit_installed_capacity'].astype(float).sum()
 
     return cf_ann

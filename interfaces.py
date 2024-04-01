@@ -220,7 +220,7 @@ def aggregate_boundary_interface(r1_r2: tuple, interface: pd.DataFrame):
 
         curs.execute(f"""REPLACE INTO
                     ExistingCapacity(regions, tech, vintage, exist_cap, exist_cap_units, exist_cap_notes, reference, data_flags, dq_est)
-                    VALUES("{in_region}", "{tech_config['tech']}", {vint}, "{capacity}", "{config.units.loc['capacity', 'units']}",
+                    VALUES("{in_region}", "{tech_config['tech']}", {vint}, "{capacity}", "({config.units.loc['capacity', 'units']})",
                     "max {weather_year} hourly flow entering {in_region} once summed along all interties - {intertie_names}",
                     "{config.references[f"{region_1}-{region_2}"]}", "coders", 1)""")
         
@@ -294,7 +294,7 @@ def aggregate_endogenous_interfaces(df_interfaces: pd.DataFrame):
 
         curs.execute(f"""REPLACE INTO
                     ExistingCapacity(regions, tech, vintage, exist_cap, exist_cap_units, exist_cap_notes, reference, data_flags, dq_est)
-                    VALUES("{region_1}-{region_2}", "{tech_config['tech']}", {vint}, "{capacity}", "{config.units.loc['capacity', 'units']}",
+                    VALUES("{region_1}-{region_2}", "{tech_config['tech']}", {vint}, "{capacity}", "({config.units.loc['capacity', 'units']})",
                     "max of seasonal capacities in either direction - {interface['associated_interties']}",
                     "{config.references['interface_capacities']}", "coders", 1)""")
         
