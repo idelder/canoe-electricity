@@ -917,6 +917,9 @@ def aggregate_ccs_retrofits(df_rtv_all: pd.DataFrame):
         input_comm['commodity'] += f"_{gen_config.name}"
         input_comm['description'] += f" from {gen_config['description']}"
 
+        # Name of CCS retrofit bypass tech
+        bypass_tech = f"{gen_config['base_tech']}_RFIT_BYPASS"
+
 
         ## Commodities
         curs.execute(f"""REPLACE INTO
@@ -929,7 +932,7 @@ def aggregate_ccs_retrofits(df_rtv_all: pd.DataFrame):
         # Bypass tech
         curs.execute(f"""REPLACE INTO
                     technologies(tech, flag, sector, tech_desc)
-                    VALUES("{gen_config['base_tech']}_RFIT_BYPASS", "p", "electricity", "dummy bypass for ccs retrofit")""")
+                    VALUES("{bypass_tech}", "p", "electricity", "dummy bypass for ccs retrofit")""")
         
         # Retrofit tech
         curs.execute(f"""REPLACE INTO
@@ -942,6 +945,18 @@ def aggregate_ccs_retrofits(df_rtv_all: pd.DataFrame):
                 # Get the existing vintages for this region and generator tech
                 exs_vints = df_rtv_gen.loc[df_rtv_gen['region']==region]['vint']
                 if len(exs_vints) == 0: continue
+
+
+                ## CapacityToActivity
+                # Bypass tech
+                curs.execute(f"""REPLACE INTO
+                            CapacityToActivity(regions, tech, c2a, c2a_notes)
+                            VALUES("{region}", "{bypass_tech}", "{config.params['c2a']}", "({config.params['c2a_unit']})")""")
+                
+                # Retrofit tech
+                curs.execute(f"""REPLACE INTO
+                            CapacityToActivity(regions, tech, c2a, c2a_notes)
+                            VALUES("{region}", "{ccs_config['tech']}", "{config.params['c2a']}", "({config.params['c2a_unit']})")""")
                 
 
                 ## LifetimeTech
@@ -1007,7 +1022,7 @@ def aggregate_ccs_retrofits(df_rtv_all: pd.DataFrame):
                         # Dummy retrofit bypass
                         curs.execute(f"""REPLACE INTO
                                     Efficiency(regions, input_comm, tech, vintage, output_comm, efficiency, eff_notes)
-                                    VALUES("{region}", "{input_comm['commodity']}", "{gen_config['base_tech']}_RFIT_BYPASS", {period}, "{output_comm['commodity']}", 1, "{eff_units} dummy bypass")""")
+                                    VALUES("{region}", "{input_comm['commodity']}", "{bypass_tech}", {period}, "{output_comm['commodity']}", 1, "{eff_units} dummy bypass")""")
 
 
                         ## CostFixed

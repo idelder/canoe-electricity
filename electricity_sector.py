@@ -99,15 +99,15 @@ def prepare_test_model():
             curs.execute(f"""REPLACE INTO SegFrac(season_name, time_of_day_name, segfrac)
                         VALUES('{day}', '{config.time.loc[h, 'time_of_day']}', {1/(24*7)})""")
 
-    base_emis = 3200
+    base_emis = 52000
     emis = {
-        2021: 1,
-        2025: 1,
-        2030: 0.8,
-        2035: 0.6,
-        2040: 0.4,
-        2045: 0.2,
-        2050: 0
+        2021: 1.00,
+        2025: 0.80,
+        2030: 0.65,
+        2035: 0.50,
+        2040: 0.35,
+        2045: 0.20,
+        2050: 0.05
     }
 
     emis_comms = [c[0] for c in curs.execute("SELECT comm_name FROM commodities WHERE flag == 'e'")]

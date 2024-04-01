@@ -177,6 +177,12 @@ def aggregate_boundary_interface(r1_r2: tuple, interface: pd.DataFrame):
                     {eff}, "{note}", "{config.references['ca_system_parameters']}", "coders", 1)""")
         
 
+        ## CapacityToActivity
+        curs.execute(f"""REPLACE INTO
+                    CapacityToActivity(regions, tech, c2a, c2a_notes)
+                    VALUES("{in_region}", "{tech_config['tech']}", "{config.params['c2a']}", "({config.params['c2a_unit']})")""")
+    
+
         ## Demand
         ann_dem = sum(out_mwh) * config.units.loc['activity', 'coders_conv_fact'] # MWh to PJ
         dem_comm = config.commodities.loc[tech_config['out_comm']]
@@ -231,6 +237,12 @@ def aggregate_boundary_interface(r1_r2: tuple, interface: pd.DataFrame):
                     VALUES("{in_region}", "{input_comm['commodity']}", "{tech_config['tech']}", {vint}, "{output_comm['commodity']}", 1, "dummy input so arbitrary")""")
         
 
+        ## CapacityToActivity
+        curs.execute(f"""REPLACE INTO
+                    CapacityToActivity(regions, tech, c2a, c2a_notes)
+                    VALUES("{in_region}", "{tech_config['tech']}", "{config.params['c2a']}", "({config.params['c2a_unit']})")""")
+        
+
         ## CapacityFactorTech
         for h, row in config.time.iterrows():
 
@@ -283,6 +295,12 @@ def aggregate_endogenous_interfaces(df_interfaces: pd.DataFrame):
                         VALUES("{tech_config['tech']}","{tech_config['description']}")""")
         
 
+        ## CapacityToActivity
+        curs.execute(f"""REPLACE INTO
+                    CapacityToActivity(regions, tech, c2a, c2a_notes)
+                    VALUES("{region_1}-{region_2}", "{tech_config['tech']}", "{config.params['c2a']}", "({config.params['c2a_unit']})")""")
+        
+
         ## ExistingCapacity
         # Capacity in each direction is max seasonal capacity
         reverse_interface = df_endogenous.loc[region_2, region_1]
@@ -316,11 +334,6 @@ def aggregate_endogenous_interfaces(df_interfaces: pd.DataFrame):
         
 
         ## CostVariable TODO
-        for period in config.model_periods:
-            curs.execute(f"""REPLACE INTO
-                        CostVariable(regions, periods, tech, vintage, cost_variable_notes, data_cost_variable, data_cost_year, data_curr, reference, dq_est)
-                        VALUES("{region_1}-{region_2}", {period}, "{tech_config['tech']}", {vint}, "TODO", {0.01}, {config.params['atb']['currency_year']},
-                        "{config.params['atb']['currency']}", "{config.references['atb']}", 1)""")
 
 
 
