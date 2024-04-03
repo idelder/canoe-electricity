@@ -251,7 +251,7 @@ def aggregate_boundary_interface(r1_r2: tuple, interface: pd.DataFrame):
             curs.execute(f"""REPLACE INTO
                         CapacityFactorTech(regions, season_name, time_of_day_name, tech, cf_tech, cf_tech_notes, reference, data_flags, dq_est)
                         VALUES("{in_region}", "{row['season']}", "{row['time_of_day']}", "{tech_config['tech']}", {cf},
-                        "{weather_year} hourly flow entering {in_region} divded by max hourly flow",
+                        "{weather_year} hourly flow entering {in_region} divided by max hourly flow",
                         "{config.references[f"{region_1}-{region_2}"]}", "coders", 1)""")
 
 

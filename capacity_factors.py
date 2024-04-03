@@ -26,5 +26,5 @@ def aggregate_existing(df_rtv: pd.DataFrame):
 def aggregate_new(df_rtv: pd.DataFrame):
 
     # TODO temporary to get things running
-    on_vre_exs.aggregate_cfs(df_rtv.loc[(df_rtv['region'] == 'ON') & (df_rtv['tech_code'].isin(['solar','wind_onshore','wind_offshore']))]) # ontario existing vre cfs
-    on_hydro_exs.aggregate_cfs(df_rtv.loc[(df_rtv['region'] == 'ON') & (df_rtv['tech_code'].isin(['hydro_daily','hydro_run']))]) # ontario existing hydro cfs
+    on_vre_exs.aggregate_cfs(df_rtv.loc[df_rtv['tech_code'].isin(['solar','wind_onshore','wind_offshore'])]) # ontario existing vre cfs
+    on_hydro_exs.aggregate_cfs(df_rtv.loc[df_rtv['tech_code'].isin(['hydro_daily','hydro_run'])]) # ontario existing hydro cfs

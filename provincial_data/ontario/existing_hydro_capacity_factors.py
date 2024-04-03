@@ -46,7 +46,7 @@ def aggregate_cfs(df_rtv: pd.DataFrame):
             hours = config.time.loc[config.time['season'] == seas].index.to_list()
 
             cap = dly['capacity']
-            act_dly = cap * sum(cfs['hydro_daily'][min(hours):max(hours)+1]) * 3.6E-6 # MWh to PJ
+            act_dly = cap * sum(cfs['hydro_daily'][min(hours):max(hours)+1]) * 3.6E-3 # GWh to PJ
 
             for period in config.model_periods:
 
@@ -60,7 +60,7 @@ def aggregate_cfs(df_rtv: pd.DataFrame):
                             reference, data_year, dq_rel, dq_comp, dq_time, dq_geog, dq_tech)
                             VALUES('{dly['region']}', {period}, '{seas}', '{dly['tech']}', {act_dly*1.01}, '(PJ)', '{max_note}',
                             '{reference}', {data_year}, 1, 1, 1, 1, 1)""")
-            
+    
     conn.commit()
     conn.close()
 

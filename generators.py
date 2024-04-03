@@ -580,8 +580,8 @@ def aggregate_rt_atb(region, tech, tech_config):
             
             if cost_invest != 0:
                 curs.execute(f"""REPLACE INTO
-                            CostInvest(regions, tech, vintage, cost_invest_notes, data_cost_invest, data_cost_year, data_curr, reference, dq_est)
-                            VALUES("{region}", "{tech}", {vint}, "{note}", {cost_invest}, {config.params['atb']['currency_year']},
+                            CostInvest(regions, tech, vintage, cost_invest_units, cost_invest_notes, data_cost_invest, data_cost_year, data_curr, reference, dq_est)
+                            VALUES("{region}", "{tech}", {vint}, "({config.units.loc['cost_invest', 'units']})", "{note}", {cost_invest}, {config.params['atb']['currency_year']},
                             "{config.params['atb']['currency']}", "{config.references['atb']}", 1)""")
 
 
@@ -666,8 +666,8 @@ def aggregate_rtv_atb(region, tech, vint, tech_config):
 
         if cost_fixed != 0:
             curs.execute(f"""REPLACE INTO
-                        CostFixed(regions, periods, tech, vintage, cost_fixed_notes, data_cost_fixed, data_cost_year, data_curr, reference, dq_est)
-                        VALUES("{region}", {period}, "{tech}", {vint}, "{note}", {cost_fixed}, {config.params['atb']['currency_year']},
+                        CostFixed(regions, periods, tech, vintage, cost_fixed_units, cost_fixed_notes, data_cost_fixed, data_cost_year, data_curr, reference, dq_est)
+                        VALUES("{region}", {period}, "{tech}", {vint}, "({config.units.loc['cost_fixed', 'units']})", "{note}", {cost_fixed}, {config.params['atb']['currency_year']},
                         "{config.params['atb']['currency']}", "{config.references['atb']}", 1)""")
 
 
@@ -691,8 +691,8 @@ def aggregate_rtv_atb(region, tech, vint, tech_config):
 
             if cost_variable != 0:
                 curs.execute(f"""REPLACE INTO
-                            CostVariable(regions, periods, tech, vintage, cost_variable_notes, data_cost_variable, data_cost_year, data_curr, reference, dq_est)
-                            VALUES("{region}", {period}, "{tech}", {vint}, "{note}", {cost_variable}, {config.params['atb']['currency_year']},
+                            CostVariable(regions, periods, tech, vintage, cost_variable_units, cost_variable_notes, data_cost_variable, data_cost_year, data_curr, reference, dq_est)
+                            VALUES("{region}", {period}, "{tech}", {vint}, "({config.units.loc['cost_variable', 'units']})", "{note}", {cost_variable}, {config.params['atb']['currency_year']},
                             "{config.params['atb']['currency']}", "{config.references['atb']}", 1)""")
 
 
@@ -719,8 +719,8 @@ def aggregate_rt_coders(region, tech, tech_config):
             cost = config.units.loc['cost_invest', 'coders_conv_fact'] * float(cost_invest[f"{vint}_CAD_per_kW"])
             # 'cost_invest_notes, data_cost_invest, data_cost_year, data_curr,' -> 'cost_invest_notes, data_cost_invest, data_cost_year, data_curr,'
             curs.execute(f"""REPLACE INTO
-                        CostInvest(regions, tech, vintage, cost_invest_notes, data_cost_invest, data_cost_year, data_curr, reference, data_flags, dq_est)
-                        VALUES("{region}", "{tech}", {vint}, "{tech_config['coders_equiv']} CAD_per_kW by vintage", {cost}, {config.params['coders']['currency_year']},
+                        CostInvest(regions, tech, vintage, cost_invest_units, cost_invest_notes, data_cost_invest, data_cost_year, data_curr, reference, data_flags, dq_est)
+                        VALUES("{region}", "{tech}", {vint}, "({config.units.loc['cost_invest', 'units']})", "{tech_config['coders_equiv']} CAD_per_kW by vintage", {cost}, {config.params['coders']['currency_year']},
                         "{config.params['coders']['currency']}", "{config.references['generation_cost_evolution']}", "coders", 1)""")
 
 
@@ -807,8 +807,8 @@ def aggregate_rtv_coders(region, tech, vint, tech_config):
 
         if cost_fixed != 0:
             curs.execute(f"""REPLACE INTO
-                        CostFixed(regions, periods, tech, vintage, cost_fixed_notes, data_cost_fixed, data_cost_year, data_curr, reference, data_flags, dq_est)
-                        VALUES("{region}", {period}, "{tech}", {vint}, "{tech_config['coders_equiv']} fixed_om_cost_CAD_per_MWyear", {cost_fixed}, {config.params['coders']['currency_year']},
+                        CostFixed(regions, periods, tech, vintage, cost_fixed_units, cost_fixed_notes, data_cost_fixed, data_cost_year, data_curr, reference, data_flags, dq_est)
+                        VALUES("{region}", {period}, "{tech}", {vint}, "({config.units.loc['cost_fixed', 'units']})", "{tech_config['coders_equiv']} fixed_om_cost_CAD_per_MWyear", {cost_fixed}, {config.params['coders']['currency_year']},
                         "{config.params['coders']['currency']}", "{config.references['generation_cost_evolution']}", "coders", 1)""")
         
         ## CostVariable
@@ -845,8 +845,8 @@ def aggregate_cost_var_rtvp_coders(region, tech, vint, period, coders_gen, tech_
 
     if cost_variable != 0:
         curs.execute(f"""REPLACE INTO
-                    CostVariable(regions, periods, tech, vintage, cost_variable_notes, data_cost_variable, data_cost_year, data_curr, reference, data_flags, dq_est)
-                    VALUES("{region}", {period}, "{tech}", {vint}, "{description}", {cost_variable}, {config.params['coders']['currency_year']},
+                    CostVariable(regions, periods, tech, vintage, cost_variable_units, cost_variable_notes, data_cost_variable, data_cost_year, data_curr, reference, data_flags, dq_est)
+                    VALUES("{region}", {period}, "{tech}", {vint}, "({config.units.loc['cost_variable', 'units']})", "{description}", {cost_variable}, {config.params['coders']['currency_year']},
                     "{config.params['coders']['currency']}", "{config.references['generation_generic']}", "coders", 1)""")
 
 
@@ -1012,8 +1012,8 @@ def aggregate_ccs_retrofits(df_rtv_all: pd.DataFrame):
 
                     if cost_invest != 0:
                         curs.execute(f"""REPLACE INTO
-                                    CostInvest(regions, tech, vintage, cost_invest_notes, data_cost_invest, data_cost_year, data_curr, reference, dq_est)
-                                    VALUES("{region}", "{ccs_config['tech']}", {vint}, "{note}", {cost_invest}, {config.params['atb']['currency_year']},
+                                    CostInvest(regions, tech, vintage, cost_invest_units, cost_invest_notes, data_cost_invest, data_cost_year, data_curr, reference, dq_est)
+                                    VALUES("{region}", "{ccs_config['tech']}", {vint}, "({config.units.loc['cost_invest', 'units']})", "{note}", {cost_invest}, {config.params['atb']['currency_year']},
                                     "{config.params['atb']['currency']}", "{config.references['atb']}", 1)""")
                     
 
@@ -1042,8 +1042,8 @@ def aggregate_ccs_retrofits(df_rtv_all: pd.DataFrame):
 
                         if cost_fixed != 0:
                             curs.execute(f"""REPLACE INTO
-                                        CostFixed(regions, periods, tech, vintage, cost_fixed_notes, data_cost_fixed, data_cost_year, data_curr, reference, dq_est)
-                                        VALUES("{region}", {period}, "{ccs_config['tech']}", {vint}, "{note}", {cost_fixed}, {config.params['atb']['currency_year']},
+                                        CostFixed(regions, periods, tech, vintage, cost_fixed_units, cost_fixed_notes, data_cost_fixed, data_cost_year, data_curr, reference, dq_est)
+                                        VALUES("{region}", {period}, "{ccs_config['tech']}", {vint}, "({config.units.loc['cost_fixed', 'units']})", "{note}", {cost_fixed}, {config.params['atb']['currency_year']},
                                         "{config.params['atb']['currency']}", "{config.references['atb']}", 1)""")
 
 
@@ -1053,8 +1053,8 @@ def aggregate_ccs_retrofits(df_rtv_all: pd.DataFrame):
 
                         if cost_variable != 0:
                             curs.execute(f"""REPLACE INTO
-                                        CostVariable(regions, periods, tech, vintage, cost_variable_notes, data_cost_variable, data_cost_year, data_curr, reference, dq_est)
-                                        VALUES("{region}", {period}, "{ccs_config['tech']}", {vint}, "{note}", {cost_variable}, {config.params['atb']['currency_year']},
+                                        CostVariable(regions, periods, tech, vintage, cost_variable_units, cost_variable_notes, data_cost_variable, data_cost_year, data_curr, reference, dq_est)
+                                        VALUES("{region}", {period}, "{ccs_config['tech']}", {vint}, "({config.units.loc['cost_variable', 'units']})", "{note}", {cost_variable}, {config.params['atb']['currency_year']},
                                         "{config.params['atb']['currency']}", "{config.references['atb']}", 1)""")
 
     conn.commit()

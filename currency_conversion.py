@@ -38,7 +38,7 @@ def convert_currencies():
                     for cost, year, curr in df[[f"data_{header}",'data_cost_year','data_curr']].values]
 
         # Add units of final currency
-        df[f"{header}_units"] = f"({config.units.loc[header, 'units']}) {base_year} {base_curr}"
+        df[f"{header}_units"] += f" {base_year} {base_curr}"
 
         # Clear the table
         curs.execute(f"DELETE FROM {table}")

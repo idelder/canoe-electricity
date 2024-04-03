@@ -16,7 +16,7 @@ ng_ccs,E_NG_CCS,natural gas combined cycle generation with 95% ccs,TRUE,ng_ccs,n
 ng_cg,E_NG_CG,natural gas heat and power cogeneration,FALSE,ng_cg,ng_cg,,,,,ng,elcg,,p,,TRUE,FALSE
 ng_ct,E_NG_CT,natural gas combustion turbine generation,TRUE,ng_sc+ng_ct+gas_ct,ng_sc,NG Combustion Turbine (F-Frame),Natural Gas_FE,NG F-Frame CT,Moderate,ng,elcg,,p,,TRUE,FALSE
 nuclear_candu,E_NUC_CANDU,nuclear candu generation,FALSE,nuclear,nuclear,,,,,u_nat,elcg_rps,,pb,,TRUE,FALSE
-nuclear_pwr,E_NUC_PWR,nuclear pressurised water reactor generation,FALSE,,nuclear,Nuclear - AP1000,Nuclear,Nuclear,Moderate,u_enr,elcg_rps,,pb,,TRUE,FALSE
+nuclear_pwr,E_NUC_PWR,nuclear pressurised water reactor generation,TRUE,,nuclear,Nuclear - AP1000,Nuclear,Nuclear,Moderate,u_enr,elcg_rps,,pb,,TRUE,FALSE
 nuclear_smr,E_NUC_SMR,nuclear small modular reactor generation,TRUE,nuclear_smr,nuclear_smr,Nuclear - Small Modular Reactor,Nuclear,Nuclear,Moderate,u_enr,elcg_rps,,pb,,TRUE,FALSE
 oil_ct,E_OIL_CT,oil combustion turbine generation,FALSE,oil_ct,oil_ct,,,,,oil,elcg,,p,,TRUE,FALSE
 oil_st,E_OIL_ST,oil steam turbine generation,FALSE,oil_st,oil_st,,,,,oil,elcg,,p,,TRUE,FALSE

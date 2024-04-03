@@ -59,20 +59,19 @@ def prepare_test_model():
     conn = sqlite3.connect(config.database_file)
     curs = conn.cursor()
       
-    rep_days = {
-        'D001': 'Jan',
-        'D009': 'Jan',
-        'D045': 'Feb',
-        'D103': 'Apr',
-        'D128': 'May',
-        'D173': 'Jun',
-        'D184': 'Jul'
-        }
+    rep_days = [
+        'D006', # Coldest day ON 2018
+        'D045', # Coldest day ON 2020
+        'D103',
+        'D128',
+        'D173',
+        'D186' # Hottest day ON 2018
+    ]
 
     curs.execute(f"""REPLACE INTO sector_labels(sector) VALUES('electric')""")
 
     curs.execute(f"DELETE FROM time_season")
-    [curs.execute(f"INSERT INTO time_season(t_season) VALUES('{day}')") for day in rep_days.keys()]
+    [curs.execute(f"INSERT INTO time_season(t_season) VALUES('{day}')") for day in rep_days]
 
     seas_tables = [
         'CapacityFactorTech',
@@ -94,10 +93,10 @@ def prepare_test_model():
                     WHERE regions = '{df_grp['regions'].iloc[0]}'
                     AND demand_name == '{df_grp['demand_name'].iloc[0]}'""")
 
-    for day in rep_days.keys():
+    for day in rep_days:
         for h in range(24):
             curs.execute(f"""REPLACE INTO SegFrac(season_name, time_of_day_name, segfrac)
-                        VALUES('{day}', '{config.time.loc[h, 'time_of_day']}', {1/(24*7)})""")
+                        VALUES('{day}', '{config.time.loc[h, 'time_of_day']}', {1/(24*6)})""")
 
     base_emis = 52000
     emis = {
